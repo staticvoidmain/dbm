@@ -1,2 +1,12 @@
 # dbm
-Database migration tool. Not terribly original.
+
+# examples
+
+``` shell
+$ dbm migrate project.json dev-environment
+
+$ dbm dump database dev customer-service
+
+$ dbm --help
+
+```

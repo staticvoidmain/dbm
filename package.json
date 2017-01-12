@@ -1,0 +1,33 @@
+{
+  "name": "dbm",
+  "version": "1.0.0",
+  "description": "A database migration tool",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha tests/*.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/staticvoidmain/dbm.git"
+  },
+  "keywords": [
+    "database",
+    "migration",
+    "tool"
+  ],
+  "author": "ross@smugdeveloper.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/staticvoidmain/dbm/issues"
+  },
+  "homepage": "https://github.com/staticvoidmain/dbm#readme",
+  "dependencies": {
+    "blessed": "^0.1.81"
+  },
+  "devDependencies": {
+    "eslint": "^3.13.1",
+    "eslint-config-standard": "^6.2.1",
+    "eslint-plugin-promise": "^3.4.0",
+    "eslint-plugin-standard": "^2.0.1"
+  }
+}
