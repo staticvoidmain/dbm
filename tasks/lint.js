@@ -7,16 +7,26 @@
  */
 
 const Parser = require('../lib/parser.js')
+const syntax = require('../lib/syntax.js')
 
 // note: these are going to likely be platform specific.
-var rules = [
-  'keywords_must_be_capitalized',
-  'prefer_utc_time',
-  'no_execsql',
-  'procedures_require_grant'
-]
+// also, I'm totally making these names up as I go.
+// also this should be a dictionary.
+const rules = {
+  keywords_must_be_capitalized: false,
+  prefer_utc_time: true,
+  no_execsql: true,
+  procedures_require_grant: true,
+  no_underscores_in_columns: true,
+  require_explicit_join: true,
+  procedure_requires_doc_string: false,
+  procedure_name_must_begin_with_prefix: true,
+  no_lazy_schema_resolution: true,
+  aliases_require_as: true,
+  no_nolock: true
+}
 
-var reserved = [
+const reserved = [
   'ADD', 'ALL', 'ALTER', 'AND', 'ANY', 'AS', 'ASC',
   'AUTHORIZATION', 'BACKUP', 'BEGIN', 'BETWEEN', 'BREAK', 'BROWSE',
   'BULK', 'BY', 'CASCADE', 'CASE', 'CHECK', 'CHECKPOINT', 'CLOSE',
@@ -50,21 +60,51 @@ var reserved = [
 ]
 
 // thoughts...
-function isUpper(token) {
-  // assumes this is 
+function isUpper (token) {
+  // assumes this is a word token
   for (var i = 0, len = token.length; i < len; i++) {
-    var char = token.charCodeAt(i);
-    if ( char > 90 ) {
-      return false;
+    var char = token.charCodeAt(i)
+    if (char > 90) {
+      return false
     }
   }
 
-  return true;
+  return true
 }
 
-module.exports = {
-  lint: function(script) {
-    var parser = new Parser({});
-    var statements = parser.parse(script);
+function visit (node, kind, callback) {
+  if (node.kind === kind) {
+    callback(node)
+  }
+
+  for (let child of node.children) {
+    visit(child, kind, callback)
   }
 }
+
+function evaluate (rule, statement, lintResult) {
+  return
+}
+
+function Linter (options) {
+  this.rules = Object.assign(rules, options)
+}
+
+Linter.prototype.lint = function (script) {
+  var parser = new Parser()
+  var statements = parser.parse(script)
+  var result = []
+
+  statements.forEach(function (statement) {
+    // todo: result.push blah blah blah.
+    this.rules.forEach(function (enabled, rule) {
+      if (enabled) {
+        evaluate(rule, statement, result)
+      }
+    })
+  })
+
+  return result
+}
+
+module.exports = Linter

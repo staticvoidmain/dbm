@@ -22,7 +22,8 @@
   },
   "homepage": "https://github.com/staticvoidmain/dbm#readme",
   "dependencies": {
-    "blessed": "^0.1.81"
+    "blessed": "^0.1.81",
+    "mocha": "^3.2.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
