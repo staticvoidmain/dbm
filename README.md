@@ -9,4 +9,8 @@ $ dbm dump database dev customer-service
 
 $ dbm --help
 
+$ dbm --interactive
+
+SKADOOSH, a curses menu system thing.
+
 ```
