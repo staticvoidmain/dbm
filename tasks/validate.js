@@ -6,7 +6,8 @@ var steps = [
   'ensure_procs_return_result',
   'ensure_role_can_execute_procs',
   'ensure_table_primary_keys',
-  'ensure_view_definitions'
+  'ensure_view_definitions',
+  'ensure_table_'
 ]
 
 function roleCanExecute(role) {

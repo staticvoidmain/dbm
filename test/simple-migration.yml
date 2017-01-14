@@ -1,0 +1,4 @@
+---
+steps:
+- drop.table: Sales.Lead
+- drop.table: Sales.Contract
