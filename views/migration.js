@@ -66,14 +66,15 @@ module.exports = {
           bg: 'blue'
         }
       },
+      heigth: 3,
       left: 5,
-      bottom: 0,
+      bottom: 1,
       commands: {
         'start': function () { runner.start() },
-        'stop': function () { runner.stop() },
-        'pause': function () { runner.pause() },
+        'retry': function () { runner.retry() },
         'skip': function () { runner.skip() },
-        'retry': function () { runner.retry() }
+        'pause': function () { runner.pause() },
+        'stop': function () { runner.stop() }
       }
     })
 
@@ -84,6 +85,7 @@ module.exports = {
     runner.on('step', function (step) {
       let item = steps.items[step.i]
       steps.setItem(item, step.toString())
+      screen.render()
     })
 
     runner.logger = logger
