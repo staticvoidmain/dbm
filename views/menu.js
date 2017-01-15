@@ -2,23 +2,50 @@
 
 const fs = require('fs')
 const blessed = require('blessed')
-const migration = require('./migration.js')
 const yaml = require('js-yaml')
+const migration = require('./migration.js')
+// const widgets = require('./widgets/custom.js')
+
+// // todo: maybe read from the file system or something?
+// function createTasks() {
+
+// }
 
 module.exports = {
   show: function (app) {
     // todo
     var screen = app.screen()
     var box = blessed.box({
+      label: 'Main Menu',
       parent: screen,
       border: 'line',
       width: '90%',
       height: '80%',
-      content: 'PLACEHOLDER MENU',
       tags: true
     })
 
-    // sliiiiiick
+    // todo: here we let them... select the operation to perform
+
+    this.selectedOp = null
+
+    // var form = blessed.form({
+
+    // })
+
+    var msg = blessed.message({
+      parent: screen,
+      border: 'line',
+      height: 'shrink',
+      width: 'half',
+      top: 'center',
+      left: 'center',
+      label: '{red-fg}Error{/red-fg} ',
+      tags: true,
+      keys: true,
+      hidden: true
+    })
+
+    // todo: file manager with a path, to support network drives and such
     var fm = blessed.filemanager({
       parent: box,
       border: 'line',
@@ -32,8 +59,7 @@ module.exports = {
       top: 'center',
       left: 'center',
       label: ' {blue-fg}%path{/blue-fg} ',
-      // todo: make this impl_home or something.
-      cwd: process.env.HOME,
+      cwd: process.env.DBM_HOME,
       keys: true,
       scrollbar: {
         bg: 'white',
@@ -56,7 +82,8 @@ module.exports = {
             doc = JSON.parse(contents)
           }
         } catch (ex) {
-          // TODO: error logging.
+          // TODO: error logging? to where?
+          msg.error(ex)
           return
         }
 

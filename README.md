@@ -1,5 +1,14 @@
 # dbm
 
+Why pay a DBA to do a bunch of tasks that a computer can do better? AYYYY LMAO
+
+
+* Backup
+* Optimize
+* Code Review
+* Migrate
+
+
 # examples
 
 ``` shell

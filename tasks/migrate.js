@@ -18,8 +18,16 @@ function identifier (id) {
   }
 }
 
+const stepStatus = {
+  pending: 'pending',
+  running: 'running',
+  complete: 'complete',
+  skipped: 'skipped',
+  failed: 'failed'
+}
+
 function Step () {
-  this.status = 'pending'
+  this.status = stepStatus.pending
   this.query = null
 }
 
@@ -55,19 +63,23 @@ DropObject.prototype.render = function (sqlgen) {
 
     this.query = table.drop().ifExists().toQuery().text
   } else {
-    this.query = 'todo'
-    // well shit.
+    // todo: not cross-vendor, or even good.
+    this.query = `drop ${this.type} ${this.name}\ngo;`
   }
 
   return this.query
 }
 
 DropObject.prototype.toString = function () {
-  let status = this.status
   let type = this.type
   let name = this.name
+  let on = this.on
 
-  return `${status} | DROP ${type} ${name}`
+  if (on) {
+    return `DROP ${type} ${name} ${on}`
+  }
+
+  return `DROP ${type} ${name}`
 }
 
 function CreateObject (key, step) { }
@@ -85,6 +97,11 @@ function createSteps (steps) {
       }
 
       if (key.startsWith('create')) {
+        models.push(new CreateObject(i, key, step))
+        break
+      }
+
+      if (key.startsWith('insert')) {
         models.push(new CreateObject(i, key, step))
         break
       }
@@ -109,7 +126,7 @@ function MigrationRunner (options) {
 
   this.sqlgen = sql.create('mssql', {})
   this.activeStep = null
-  this.stepIndex = -1
+  this.stepIndex = 0
   this.stepCount = options.steps.length
   this.steps = createSteps(options.steps)
   if (!options.no_sort) {
@@ -118,19 +135,7 @@ function MigrationRunner (options) {
   // todo: this is required for codegen... uncomment
   // this.platform = options.platform || 'mssql'
   // zomg fake db help.
-  this.db = {
-    run: function (command) {
-      return new Promise(function (resolve) {
-        let sleep = Math.floor(Math.random() * 5000)
-        setTimeout(function () {
-          resolve({
-            success: true,
-            messages: 'execution time = ' + sleep + 'ms'
-          })
-        }, sleep)
-      })
-    }
-  }
+  this.db = 
 
   EventEmitter.call(this)
 }
@@ -148,19 +153,17 @@ MigrationRunner.prototype.log = function (message) {
 
 MigrationRunner.prototype.sortSteps = function () {
   // todo: sort into the proper order.
-  // order as follows
-  // - drops
+  // - drops (in order?)
   // - create
   // - trigger
   // - views
+  // - constraints
   // - procs
   // - run
 }
 
-MigrationRunner.prototype.getStepNames = function () {
-  return this.steps.map(function (step) {
-    return step.toString()
-  })
+MigrationRunner.prototype.getSteps = function () {
+  return this.steps
 }
 
 MigrationRunner.prototype.start = function () {
@@ -168,11 +171,8 @@ MigrationRunner.prototype.start = function () {
     return
   }
 
-  // TODO: need timestamps on all logger calls.
-  // and some formatting might be nice too.
-  this.log('migration started')
+  this.log('Migration Started')
   this.status = 'started'
-  this.stepIndex++
   this.next()
 }
 
@@ -180,11 +180,14 @@ MigrationRunner.prototype.next = function () {
   let self = this
   let step = this.steps[this.stepIndex]
 
+  if (this.paused || this.terminated) {
+    return
+  }
+
   // maybe something a little more sophisticated here
   // like completed with errors or something.
   if (!step) {
     this.log('Migration Complete')
-    this.status = 'COMPLETE'
     this.emit('done')
     return
   }
@@ -223,6 +226,21 @@ MigrationRunner.prototype.retry = function () {
 MigrationRunner.prototype.skip = function () {
   this.stepIndex++
   this.next()
+}
+
+MigrationRunner.prototype.stop = function () {
+  this.stop = true
+  while (this.stepIndex < this.stepCount) {
+    let step = this.steps[this.stepIndex]
+    step.status = 'canceled'
+    this.emit('step', step)
+    this.stepIndex++
+  }
+}
+
+MigrationRunner.prototype.pause = function () {
+  this.pause = true
+  // todo: implement pause, later....
 }
 
 MigrationRunner.prototype.constructor = EventEmitter

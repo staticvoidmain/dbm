@@ -9,6 +9,7 @@ module.exports = {
 
     var menu = blessed.form({
       parent: screen,
+      label: 'login',
       left: 'center',
       top: 'center',
       keys: true,
@@ -17,17 +18,8 @@ module.exports = {
       height: '50%'
     })
 
-    // todo: at this point, we know how large the window is? right?
-    blessed.box({
-      tags: true,
-      parent: menu,
-      height: 1,
-      shrink: true,
-      content: '{center}DBM Interactive{/center}'
-    })
-
-    blessed.box({
-      left: 5,
+    blessed.text({
+      left: 6,
       top: 4,
       width: 'half',
       parent: menu,
@@ -46,9 +38,9 @@ module.exports = {
       top: 5
     })
 
-    blessed.box({
-      left: 5,
-      top: 7,
+    blessed.text({
+      left: 6,
+      top: 6,
       tags: true,
       width: 'half',
       parent: menu,
@@ -62,7 +54,7 @@ module.exports = {
       censor: true,
       width: 'half',
       left: 5,
-      top: 8,
+      top: 7,
       style: { bg: 'white', fg: 'black' },
       name: 'password'
     })

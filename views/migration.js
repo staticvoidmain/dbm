@@ -5,6 +5,23 @@
 const blessed = require('blessed')
 const MigrationRunner = require('../tasks/migrate.js')
 
+const statusToColorMap = {
+  'failed': 'red',
+  'complete': 'green',
+  'running': 'blue'
+}
+
+function formatStepString (step) {
+  let stepString = step.toString()
+  let color = statusToColorMap[step.status]
+
+  if (color) {
+    return `${step.i} {${color}-bg} ${step.status} | ${stepString} {/${color}-bg}`
+  }
+
+  return `${step.i} ${step.status} | ${stepString}`
+}
+
 module.exports = {
   show: function (app, doc) {
     var runner = new MigrationRunner(doc)
@@ -20,9 +37,10 @@ module.exports = {
       width: '50%',
       height: '100%',
       border: 'line',
+      tags: true,
       left: 0,
       top: 0,
-      items: runner.getStepNames()
+      items: runner.getSteps().map(formatStepString)
     })
 
     var logger = blessed.log({
@@ -55,7 +73,6 @@ module.exports = {
       height: 1,
       keys: true,
       style: {
-        bg: 'green',
         item: {
           bg: 'red',
           focus: {
@@ -84,7 +101,7 @@ module.exports = {
 
     runner.on('step', function (step) {
       let item = steps.items[step.i]
-      steps.setItem(item, step.toString())
+      steps.setItem(item, formatStepString(step))
       screen.render()
     })
 
