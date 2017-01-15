@@ -4,6 +4,7 @@
 const sql = require('sql')
 const inherits = require('util').inherits
 const EventEmitter = require('events')
+const factory = require('./dbfactory')
 
 function identifier (id) {
   let parts = id.split('.')
@@ -26,10 +27,21 @@ const stepStatus = {
   failed: 'failed'
 }
 
-function Step () {
+function Step (i, action) {
+  this.i = i
+  this.action = action
   this.status = stepStatus.pending
   this.query = null
 }
+
+function RunStep (i, key, step) {
+  this.script = step['run']
+  this.on = step.on
+
+  Step.call(this, [i, 'run'])
+}
+
+inherits(RunStep, Step)
 
 function DropObject (i, key, step) {
   let parts = key.split('.')
@@ -37,9 +49,8 @@ function DropObject (i, key, step) {
     throw Error('unable to parse drop')
   }
 
-  Step.call(this)
+  Step.call(this, [i, 'drop'])
 
-  this.i = i
   this.type = parts[1]
   this.name = step[key]
   this.db = step.on
@@ -82,11 +93,20 @@ DropObject.prototype.toString = function () {
   return `DROP ${type} ${name}`
 }
 
-function CreateObject (key, step) { }
+function CreateObject (i, key, step) {
+  Step.call(this, [i])
 
-function createSteps (steps) {
+
+}
+
+CreateObject.prototype.toString = function () {
+
+}
+
+function createSteps (options) {
   // todo: pass in the sql generator... or pass it to render...
   let models = []
+  let steps = options.steps
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i]
 
@@ -97,20 +117,34 @@ function createSteps (steps) {
       }
 
       if (key.startsWith('create')) {
+        // create triggers/views/etc
         models.push(new CreateObject(i, key, step))
         break
       }
 
-      if (key.startsWith('insert')) {
-        models.push(new CreateObject(i, key, step))
+      if (key === 'run') {
+        models.push(new RunStep(i, key, step))
         break
       }
+
+      // if (key.startsWith('insert')) {
+      //   models.push(new InsertRows(i, key, step))
+      //   break
+      // }
 
       // todo: alter etc etc etc
     }
   }
 
-  // todo: stuff
+  // fill in any non-explicit ONs
+  if (!options.dbs) {
+    models.forEach(function (m) {
+      if (!m.on) {
+        m.on = options.db
+      }
+    })
+  }
+
   return models
 }
 
@@ -128,14 +162,17 @@ function MigrationRunner (options) {
   this.activeStep = null
   this.stepIndex = 0
   this.stepCount = options.steps.length
-  this.steps = createSteps(options.steps)
+  this.steps = createSteps(options)
   if (!options.no_sort) {
     this.sortSteps()
   }
   // todo: this is required for codegen... uncomment
   // this.platform = options.platform || 'mssql'
   // zomg fake db help.
-  this.db = 
+  this.db = database.create('mssql', {
+    host: 'localhost',
+    name: 'adventureworks'
+  })
 
   EventEmitter.call(this)
 }

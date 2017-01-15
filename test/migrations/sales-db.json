@@ -1,0 +1,29 @@
+{
+  "tables": [
+    {
+      "schema": "",
+      "name": "",
+      "columns": [
+
+      ],
+      "indexes": [],
+      "keys": []
+    }
+  ],
+  "procs": [
+    { 
+      "schema": "",
+      "name": 
+      "something.something", 
+      "hash": "", 
+      "parameters": [] 
+    }
+  ],
+  "funcs": [
+    { 
+      "schema": "",
+      "name": "", 
+      "parameters": []
+    }
+  ]
+}
