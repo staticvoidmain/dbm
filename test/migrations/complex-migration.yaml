@@ -1,6 +1,7 @@
 ---
 name: my-first-migration
-no_sort: true
+disableStepSort: true
+disableBackups: true
 dbs:
 - captive: reporting.Captive
 - vendor: originations.Vendor
@@ -25,4 +26,5 @@ steps:
   from: procs/my_proc.sql
   on: vendor
 
-- run: scripts/insert.sql
+- run: scripts/value_inserts.sql
+- run: scripts/some_other_script.sql

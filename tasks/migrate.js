@@ -4,7 +4,8 @@
 const sql = require('sql')
 const inherits = require('util').inherits
 const EventEmitter = require('events')
-const factory = require('./dbfactory')
+const factory = require('../lib/database.js')
+const fs = require('fs')
 
 function identifier (id) {
   let parts = id.split('.')
@@ -43,6 +44,14 @@ function RunStep (i, key, step) {
 
 inherits(RunStep, Step)
 
+RunStep.prototype.render = function () {
+  if (!this.query) {
+    this.query = fs.readFileSync(this.script)
+  }
+
+  return this.query
+}
+
 function DropObject (i, key, step) {
   let parts = key.split('.')
   if (parts.length <= 1) {
@@ -59,23 +68,21 @@ function DropObject (i, key, step) {
 inherits(DropObject, Step)
 
 DropObject.prototype.render = function (sqlgen) {
-  if (this.query) {
-    return this.query
-  }
+  if (!this.query) {
+    var id = identifier(this.name)
 
-  var id = identifier(this.name)
+    if (this.type === 'table') {
+      var table = sqlgen.define({
+        name: id.name,
+        schema: id.schema || 'dbo',
+        columns: [] // doesn't matter, we're dropping it
+      })
 
-  if (this.type === 'table') {
-    var table = sqlgen.define({
-      name: id.name,
-      schema: id.schema || 'dbo',
-      columns: [] // doesn't matter, we're dropping it
-    })
-
-    this.query = table.drop().ifExists().toQuery().text
-  } else {
-    // todo: not cross-vendor, or even good.
-    this.query = `drop ${this.type} ${this.name}\ngo;`
+      this.query = table.drop().ifExists().toQuery().text
+    } else {
+      // todo: not cross-vendor, or even very good.
+      this.query = `drop ${this.type} ${this.name}\ngo;`
+    }
   }
 
   return this.query
@@ -86,11 +93,7 @@ DropObject.prototype.toString = function () {
   let name = this.name
   let on = this.on
 
-  if (on) {
-    return `DROP ${type} ${name} ${on}`
-  }
-
-  return `DROP ${type} ${name}`
+  return `DROP ${type} ${name} ${on}`
 }
 
 function CreateObject (i, key, step) {
@@ -117,7 +120,9 @@ function createSteps (options) {
       }
 
       if (key.startsWith('create')) {
-        // create triggers/views/etc
+        // create tables/triggers/views/func
+        // this means that there SHOULD be a corresponding
+        // drop in the impl to match.
         models.push(new CreateObject(i, key, step))
         break
       }
@@ -150,15 +155,19 @@ function createSteps (options) {
 
 /**
  * TODO: support journaling to a database?
+ * @param {Object} doc the document describing the migration
+ * @param {Object} env the 'environment' to use along with the passwords for each.
  */
-function MigrationRunner (options) {
+function MigrationRunner (options, env) {
   // stole this from a tutorial, but I kinda like it.
   // saves you if you forget the new keyword.
   if (!(this instanceof MigrationRunner)) {
     return new MigrationRunner(options)
   }
 
-  this.sqlgen = sql.create('mssql', {})
+  // no multi vendor implementations...
+  let vendor = 'mssql'
+  this.sqlgen = sql.create(vendor, {})
   this.activeStep = null
   this.stepIndex = 0
   this.stepCount = options.steps.length
@@ -166,12 +175,15 @@ function MigrationRunner (options) {
   if (!options.no_sort) {
     this.sortSteps()
   }
-  // todo: this is required for codegen... uncomment
-  // this.platform = options.platform || 'mssql'
-  // zomg fake db help.
-  this.db = database.create('mssql', {
+
+  // lazy create them? // we might need multiple connections of different types
+  // in the worst case scenario...
+  // fuck okay we just can't do the complex one yet.
+  this.db = factory.create(vendor, {
     host: 'localhost',
-    name: 'adventureworks'
+    name: 'marketing',
+    user: 'ross',
+    password: 'root'
   })
 
   EventEmitter.call(this)
@@ -188,6 +200,7 @@ MigrationRunner.prototype.log = function (message) {
   this.logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message)
 }
 
+// currently does nothing. xD
 MigrationRunner.prototype.sortSteps = function () {
   // todo: sort into the proper order.
   // - drops (in order?)
@@ -197,10 +210,6 @@ MigrationRunner.prototype.sortSteps = function () {
   // - constraints
   // - procs
   // - run
-}
-
-MigrationRunner.prototype.getSteps = function () {
-  return this.steps
 }
 
 MigrationRunner.prototype.start = function () {

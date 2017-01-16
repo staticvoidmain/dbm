@@ -40,14 +40,14 @@ module.exports = {
       tags: true,
       left: 0,
       top: 0,
-      items: runner.getSteps().map(formatStepString)
+      items: runner.steps.map(formatStepString)
     })
 
     var logger = blessed.log({
       parent: screen,
-      width: '50%',
+      width: '50%+1',
       height: '100%',
-      left: '50%+1',
+      left: '50%-1',
       top: 0,
       border: 'line',
       tags: true,

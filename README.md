@@ -1,8 +1,10 @@
 # dbm
 
-Why pay a DBA to do a bunch of tasks that a computer can do better? AYYYY LMAO
+A DBA is just a programmer who only knows one language.
+-Ross
 
-
+Use tools to:
+* Analyze
 * Backup
 * Optimize
 * Code Review
@@ -23,6 +25,17 @@ $ dbm --interactive
 
 ```
 
+# Installation
+
+By default, no sql drivers will be installed. You should determine which platforms you will be targeting and install those.
+
+```
+npm install mssql
+
+npm install pg
+
+npm install sqlite3
+```
 
 # Migrations
 

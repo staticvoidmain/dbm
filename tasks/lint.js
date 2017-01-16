@@ -13,7 +13,7 @@ const syntax = require('../lib/syntax.js')
 // also, I'm totally making these names up as I go.
 // also this should be a dictionary.
 const rules = {
-  keywords_must_be_capitalized: false,
+  keywords_must_be_lower: true,
   prefer_utc_time: true,
   no_execsql: true,
   procedures_require_grant: true,
@@ -21,7 +21,7 @@ const rules = {
   require_explicit_join: true,
   procedure_requires_doc_string: false,
   procedure_name_must_begin_with_prefix: true,
-  no_lazy_schema_resolution: true,
+  no_lazy_schema_resolution: true, // DbName..Foo
   aliases_require_as: true,
   no_nolock: true
 }
@@ -59,7 +59,6 @@ const reserved = [
   'WHERE', 'WHILE', 'WITH', 'WITHIN GROUP', 'WRITETEXT'
 ]
 
-// thoughts...
 function isUpper (token) {
   // assumes this is a word token
   for (var i = 0, len = token.length; i < len; i++) {
@@ -96,7 +95,6 @@ Linter.prototype.lint = function (script) {
   var result = []
 
   statements.forEach(function (statement) {
-    // todo: result.push blah blah blah.
     this.rules.forEach(function (enabled, rule) {
       if (enabled) {
         evaluate(rule, statement, result)

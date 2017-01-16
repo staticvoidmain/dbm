@@ -6,24 +6,33 @@
       "columns": [
 
       ],
-      "indexes": [],
-      "keys": []
+      "indexes": [
+        { "name": "", "type": "", "columns": [] }
+      ],
+      "keys": [
+        { }
+      ]
     }
   ],
+  "views": [ ],
   "procs": [
     { 
-      "schema": "",
-      "name": 
-      "something.something", 
+      "schema": "Sales",
+      "name": "GetOrderDetails", 
       "hash": "", 
-      "parameters": [] 
+      "parameters": [
+        { "name": "order_id", "type": "int" }
+      ] 
     }
   ],
   "funcs": [
     { 
-      "schema": "",
-      "name": "", 
-      "parameters": []
+      "schema": "sales",
+      "name": "compute_tax", 
+      "parameters": [
+        { "name": "cost", "type": "decimal" },
+        { "name": "state", "type": "char(2)" }
+      ]
     }
   ]
 }
