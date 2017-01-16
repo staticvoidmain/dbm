@@ -7,7 +7,7 @@ Use tools to:
 * Analyze
 * Backup
 * Optimize
-* Code Review
+* Review
 * Migrate
 
 

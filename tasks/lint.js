@@ -14,15 +14,25 @@ const syntax = require('../lib/syntax.js')
 // also this should be a dictionary.
 const rules = {
   keywords_must_be_lower: true,
+  create_must_include_schema: true,
   prefer_utc_time: true,
   no_execsql: true,
   procedures_require_grant: true,
-  no_underscores_in_columns: true,
+  no_underscores_in_columns: false,
   require_explicit_join: true,
   procedure_requires_doc_string: false,
   procedure_name_must_begin_with_prefix: true,
-  no_lazy_schema_resolution: true, // DbName..Foo
+
+  /**
+   * ex: select * from DbName..Foo
+   * just because
+   */
+  no_lazy_schema_resolution: true,
   aliases_require_as: true,
+
+  /**
+   * dirty reads should be off by default
+   */
   no_nolock: true
 }
 

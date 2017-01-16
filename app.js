@@ -17,7 +17,7 @@ var app = {
       color: 'blue',
       blink: true
     },
-    dockBorders: true,
+    /* not sure about these settings.. */
     // dump: __dirname + '/logs/dbm.log',
     // terminal: 'xterm',
     // fullUnicode: true,
@@ -25,8 +25,12 @@ var app = {
     // autoPadding: true,
     smartCSR: true
   },
-  form_defaults: {
-    // / blah blalh blah
+  buttonStyle: {
+    bg: 'blue',
+    fg: 'black',
+    focus: {
+      bg: 'magenta'
+    }
   },
   screen: function (opt) {
     let screen = blessed.screen(Object.assign({}, this.screen_settings, opt))
@@ -39,12 +43,14 @@ var app = {
   }
 }
 
-// todo: emacs-like keybindings.
-let exists = fs.existsSync('.creds')
+// // todo: sprinkle in some emacs-like keybindings.
+// let exists = fs.existsSync('.creds')
 
-if (exists) {
-  app.creds = fs.readFileSync('.creds', 'utf8')
-  menu.show(app)
-} else {
-  login.show(app)
-}
+// if (exists) {
+//   app.creds = fs.readFileSync('.creds', 'utf8')
+//   menu.show(app)
+// } else {
+//   login.show(app)
+// }
+
+menu.show(app)

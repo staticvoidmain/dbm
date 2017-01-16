@@ -12,7 +12,7 @@ create table Sales.Contact (
   id int not null,
   first_name varchar(50),
   last_name varchar(50),
-  phone varchar(10) not null,
+  phone varchar(10) not null
 );
 
 create table Sales.Customer (
@@ -41,4 +41,4 @@ create table Sales.m_Order_Product (
   quantity int not null
 );
 
--- todo: foreign key relationships
+-- todo: foreign key relationships and such.

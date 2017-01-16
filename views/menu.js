@@ -4,16 +4,10 @@ const fs = require('fs')
 const blessed = require('blessed')
 const yaml = require('js-yaml')
 const migration = require('./migration.js')
-// const widgets = require('./widgets/custom.js')
-
-// // todo: maybe read from the file system or something?
-// function createTasks() {
-
-// }
+const backupView = require('./backup.js')
 
 module.exports = {
   show: function (app) {
-    // todo
     var screen = app.screen()
     var box = blessed.box({
       label: 'Main Menu',
@@ -25,12 +19,48 @@ module.exports = {
     })
 
     // todo: here we let them... select the operation to perform
+    var menu = blessed.list({
+      parent: box,
+      label: 'Tasks',
+      border: 'line',
+      style: {
+        selected: {
+          bg: 'blue'
+        }
+      },
+      keys: true,
+      hidden: false,
+      height: 'half',
+      width: 'half',
+      top: 'center',
+      left: 'center'
+    })
 
-    this.selectedOp = null
+    menu.add('Backup:   export the schema and data to the file-system')
+    menu.add('Migrate:  run a set of scripts against the database to create/update or remove db objects')
+    menu.add('Analyze:  inspect your database for potential problems.')
+    menu.add('Optimize: automatically fix common database performance issues.')
 
-    // var form = blessed.form({
+    menu.on('action', function (item, i) {
+      if (i === 0) {
+        backup()
+      } else if (i === 1) {
+        migrate()
+      }
+      // todo: all the rest
+    })
 
-    // })
+    function backup () {
+      backupView.show(app)
+      screen.destroy()
+    }
+
+    function migrate () {
+      menu.hide()
+      fm.refresh()
+      fm.show()
+      fm.focus()
+    }
 
     var msg = blessed.message({
       parent: screen,
@@ -54,11 +84,12 @@ module.exports = {
           bg: 'blue'
         }
       },
+      hidden: true,
       height: 'half',
       width: 'half',
       top: 'center',
       left: 'center',
-      label: ' {blue-fg}%path{/blue-fg} ',
+      label: ' {blue-fg}%path{/blue-fg}',
       cwd: process.env.DBM_HOME,
       keys: true,
       scrollbar: {
@@ -93,9 +124,7 @@ module.exports = {
       screen.destroy()
     })
 
-    fm.refresh()
-    fm.focus()
-
+    menu.focus()
     screen.render()
   }
 }
