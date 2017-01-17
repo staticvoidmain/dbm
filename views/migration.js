@@ -14,33 +14,23 @@ const statusToColorMap = {
 function formatStepString (step) {
   let stepString = step.toString()
   let color = statusToColorMap[step.status]
+  var start = ''
+  var end = ''
 
   if (color) {
-    return `${step.i} {${color}-bg} ${step.status} | ${stepString} {/${color}-bg}`
+    start = `{${color}-bg}`
+    end = `{/${color}-bg}`
   }
 
-  return `${step.i} ${step.status} | ${stepString}`
+  return start + `${step.status} | ${stepString}` + end
 }
 
 module.exports = {
   show: function (app, doc) {
-    var runner = new MigrationRunner(doc)
     var screen = app.screen({
       width: '95%',
       height: '95%',
       border: 'line'
-    })
-
-    var steps = blessed.list({
-      label: 'steps',
-      parent: screen,
-      width: '50%',
-      height: '100%',
-      border: 'line',
-      tags: true,
-      left: 0,
-      top: 0,
-      items: runner.steps.map(formatStepString)
     })
 
     var logger = blessed.log({
@@ -63,6 +53,41 @@ module.exports = {
           inverse: true
         }
       }
+    })
+
+    var log = function (message) {
+      let d = new Date()
+      let date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
+      let time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
+      let ts = date + ' ' + time
+
+      logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message)
+    }
+
+    var runner = new MigrationRunner(doc, app.env)
+    log('Loaded migration: ' + doc.path)
+
+    runner.on('log', log)
+    runner.on('error', function (err) {
+      log('{red-fg}' + err + '{/red-fg}')
+    })
+
+    var steps = blessed.list({
+      label: 'steps',
+      parent: screen,
+      width: '50%',
+      height: '100%',
+      border: 'line',
+      tags: true,
+      left: 0,
+      top: 0,
+      items: runner.steps.map(formatStepString)
+    })
+
+    runner.on('step', function (step) {
+      let item = steps.items[step.i]
+      steps.setItem(item, formatStepString(step))
+      screen.render()
     })
 
     var bar = blessed.listbar({
@@ -95,17 +120,6 @@ module.exports = {
       }
     })
 
-    bar.on('press', function (command) {
-      runner[command]()
-    })
-
-    runner.on('step', function (step) {
-      let item = steps.items[step.i]
-      steps.setItem(item, formatStepString(step))
-      screen.render()
-    })
-
-    runner.logger = logger
     bar.focus()
     screen.render()
   }

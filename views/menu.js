@@ -99,6 +99,7 @@ module.exports = {
     })
 
     fm.on('file', function (file) {
+      // todo: maybe move this into the migration runner?
       let isJson = file.endsWith('.js') || file.endsWith('.json')
       let isYaml = file.endsWith('.yml') || file.endsWith('.yaml')
       let doc = null
@@ -112,8 +113,10 @@ module.exports = {
           } else {
             doc = JSON.parse(contents)
           }
+
+          doc.path = file
         } catch (ex) {
-          // TODO: error logging? to where?
+          // TODO: error logging? we could hang it off app like all the other global shit.
           msg.error(ex)
           return
         }

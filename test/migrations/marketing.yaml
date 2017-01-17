@@ -1,0 +1,10 @@
+---
+name: Marketing database v1
+db: ross
+steps:
+- create.table: Sales.Contact
+- create.table: Sales.Customer
+- create.table: Sales.Lead
+- create.table: Sales.Orders
+- create.table: Sales.m_Order_Product
+- run: insert_contacts

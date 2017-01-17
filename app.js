@@ -2,14 +2,22 @@
 'use strict'
 
 // todo: should we actually support stand-alone commands too?
-const fs = require('fs')
+// const fs = require('fs')
 const blessed = require('blessed')
-const login = require('./views/login.js')
+// const login = require('./views/login.js')
 const menu = require('./views/menu.js')
 
 // blessed forces a lot of duplicate declarations of common things.
 // like, if I want vi-mode then... like... wtf.
 var app = {
+  // todo: these are just temp settings
+  env: {
+    vendor: 'postgres',
+    host: 'localhost',
+    user: 'sql_pg',
+    password: 'abc123',
+    name: 'ross'
+  },
   screen_settings: {
     debug: true,
     cursor: {
@@ -44,10 +52,10 @@ var app = {
 }
 
 // // todo: sprinkle in some emacs-like keybindings.
-// let exists = fs.existsSync('.creds')
+// let exists = fs.existsSync('creds.yml')
 
 // if (exists) {
-//   app.creds = fs.readFileSync('.creds', 'utf8')
+//   app.creds = fs.readFileSync('creds.yml', 'utf8')
 //   menu.show(app)
 // } else {
 //   login.show(app)

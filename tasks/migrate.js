@@ -6,6 +6,7 @@ const inherits = require('util').inherits
 const EventEmitter = require('events')
 const factory = require('../lib/database.js')
 const fs = require('fs')
+const path = require('path')
 
 function identifier (id) {
   let parts = id.split('.')
@@ -35,18 +36,40 @@ function Step (i, action) {
   this.query = null
 }
 
-function RunStep (i, key, step) {
-  this.script = step['run']
-  this.on = step.on
+Step.prototype.toString = function () {
+  let action = this.action
+  let type = this.type
+  let name = this.name
+  let on = this.on
 
-  Step.call(this, [i, 'run'])
+  return `${action} ${type} ${name} on ${on}`
+}
+
+/**
+ * if the path is not set explicitly, this function automatically resolves
+ * steps of the form
+ *  drop.table: Foo.Bar
+ *  to <root>/tables/Foo.bar.sql
+ */
+Step.prototype.getPath = function () {
+  let convention = '/' + this.type + 's/' + this.name + '.sql'
+  return path.join(this.root, (this.path || convention))
+}
+
+function RunStep (i, key, step) {
+  Step.call(this, i, 'run')
+  this.root = step.root
+  this.name = step['run']
+  this.on = step.on
+  this.type = 'script'
 }
 
 inherits(RunStep, Step)
 
 RunStep.prototype.render = function () {
   if (!this.query) {
-    this.query = fs.readFileSync(this.script)
+    let path = this.getPath()
+    this.query = fs.readFileSync(path, 'utf8')
   }
 
   return this.query
@@ -55,10 +78,10 @@ RunStep.prototype.render = function () {
 function DropObject (i, key, step) {
   let parts = key.split('.')
   if (parts.length <= 1) {
-    throw Error('unable to parse drop')
+    throw Error('malformed drop, missing type')
   }
 
-  Step.call(this, [i, 'drop'])
+  Step.call(this, i, 'drop')
 
   this.type = parts[1]
   this.name = step[key]
@@ -74,44 +97,77 @@ DropObject.prototype.render = function (sqlgen) {
     if (this.type === 'table') {
       var table = sqlgen.define({
         name: id.name,
-        schema: id.schema || 'dbo',
+        schema: id.schema,
         columns: [] // doesn't matter, we're dropping it
       })
 
       this.query = table.drop().ifExists().toQuery().text
     } else {
       // todo: not cross-vendor, or even very good.
-      this.query = `drop ${this.type} ${this.name}\ngo;`
+      this.query = `drop ${this.type} ${this.name};`
     }
   }
 
   return this.query
 }
 
-DropObject.prototype.toString = function () {
-  let type = this.type
-  let name = this.name
-  let on = this.on
-
-  return `DROP ${type} ${name} ${on}`
-}
-
 function CreateObject (i, key, step) {
-  Step.call(this, [i])
+  let parts = key.split('.')
+  if (parts.length <= 1) {
+    throw Error('malformed create, missing type')
+  }
 
+  Step.call(this, i, 'create')
 
+  this.name = step[key]
+  this.type = parts[1]
+  this.root = step.root
+  this.path = step.from
+  this.on = step.on
 }
 
-CreateObject.prototype.toString = function () {
+inherits(CreateObject, Step)
 
+CreateObject.prototype.render = function () {
+  if (!this.query) {
+    // convention-based file resolution, woo
+    let script = this.getPath()
+
+    this.query = fs.readFileSync(script, 'utf8')
+  }
+
+  return this.query
 }
 
-function createSteps (options) {
-  // todo: pass in the sql generator... or pass it to render...
+/**
+ * TODO: support journaling to a database?
+ * @param {Object} doc the document describing the migration
+ * @param {Object} env the 'environment' to use along with the passwords for each.
+ */
+function MigrationRunner (doc, env) {
+  // stole this from a tutorial, but I kinda like it.
+  // saves you if you forget the new keyword.
+  EventEmitter.call(this)
+
+  this.root = path.dirname(doc.path)
+  this.sqlgen = sql.create(env.vendor, {})
+  this.activeStep = null
+  this.stepIndex = 0
+  this.stepCount = doc.steps.length
+  this.steps = this.createSteps(doc)
+
+  // lazy create them? // we might need multiple connections of different types
+  // in the worst case scenario...
+  // fuck okay we just can't do the complex one yet.
+  this.db = factory.create(env.vendor, env)
+}
+
+MigrationRunner.prototype.createSteps = function (options) {
   let models = []
   let steps = options.steps
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i]
+    step.root = this.root
 
     for (let key in step) {
       if (key.startsWith('drop')) {
@@ -120,9 +176,6 @@ function createSteps (options) {
       }
 
       if (key.startsWith('create')) {
-        // create tables/triggers/views/func
-        // this means that there SHOULD be a corresponding
-        // drop in the impl to match.
         models.push(new CreateObject(i, key, step))
         break
       }
@@ -132,72 +185,29 @@ function createSteps (options) {
         break
       }
 
-      // if (key.startsWith('insert')) {
-      //   models.push(new InsertRows(i, key, step))
-      //   break
-      // }
+        // if (key.startsWith('insert')) {
+        //   models.push(new InsertRows(i, key, step))
+        //   break
+        // }
 
-      // todo: alter etc etc etc
+        // todo: alter etc etc etc
     }
   }
 
   // fill in any non-explicit ONs
   if (!options.dbs) {
     models.forEach(function (m) {
-      if (!m.on) {
-        m.on = options.db
-      }
+      m.on = m.on || options.db
     })
   }
 
   return models
 }
 
-/**
- * TODO: support journaling to a database?
- * @param {Object} doc the document describing the migration
- * @param {Object} env the 'environment' to use along with the passwords for each.
- */
-function MigrationRunner (options, env) {
-  // stole this from a tutorial, but I kinda like it.
-  // saves you if you forget the new keyword.
-  if (!(this instanceof MigrationRunner)) {
-    return new MigrationRunner(options)
-  }
-
-  // no multi vendor implementations...
-  let vendor = 'mssql'
-  this.sqlgen = sql.create(vendor, {})
-  this.activeStep = null
-  this.stepIndex = 0
-  this.stepCount = options.steps.length
-  this.steps = createSteps(options)
-  if (!options.no_sort) {
-    this.sortSteps()
-  }
-
-  // lazy create them? // we might need multiple connections of different types
-  // in the worst case scenario...
-  // fuck okay we just can't do the complex one yet.
-  this.db = factory.create(vendor, {
-    host: 'localhost',
-    name: 'marketing',
-    user: 'ross',
-    password: 'root'
-  })
-
-  EventEmitter.call(this)
-}
-
 inherits(MigrationRunner, EventEmitter)
 
 MigrationRunner.prototype.log = function (message) {
-  let d = new Date()
-  let date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
-  let time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
-  let ts = date + ' ' + time
-
-  this.logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message)
+  this.emit('log', message)
 }
 
 // currently does nothing. xD
@@ -218,25 +228,23 @@ MigrationRunner.prototype.start = function () {
   }
 
   this.log('Migration Started')
-  this.status = 'started'
   this.next()
 }
 
 MigrationRunner.prototype.next = function () {
-  let self = this
-  let step = this.steps[this.stepIndex]
-
   if (this.paused || this.terminated) {
     return
   }
 
   // maybe something a little more sophisticated here
   // like completed with errors or something.
-  if (!step) {
-    this.log('Migration Complete')
+  if (this.stepIndex >= this.stepCount) {
+    this.log('Migration Complete!')
     this.emit('done')
     return
   }
+
+  let step = this.steps[this.stepIndex]
 
   // I guess this should just be runStep
   step.status = 'running'
@@ -244,24 +252,25 @@ MigrationRunner.prototype.next = function () {
 
   this.log('running step: ' + step.toString())
   let query = step.render(this.sqlgen)
+  let self = this
 
-  self.log(query)
+  self.log('query: \n' + query)
 
   this.db.run(query).then(function (result) {
     self.log('Step Completed')
-    self.log(result.messages)
 
-    if (result.success) {
-      step.status = 'complete'
-      self.emit('step', step)
-      self.stepIndex++
-      self.next()
-    } else {
-      step.status = 'failed'
-      self.emit('step', step)
+    if (result.rowCount) {
+      self.log('( ' + result.rowCount + ' ) rows affected')
     }
+
+    step.status = stepStatus.complete
+    self.emit('step', step)
+    self.stepIndex++
+    self.next()
   }).catch(function (err) {
-    self.log('{red-fg}' + err + '{/red-fg}')
+    step.status = stepStatus.failed
+    self.emit('step', step)
+    self.emit('error', err)
   })
 }
 
@@ -270,6 +279,8 @@ MigrationRunner.prototype.retry = function () {
 }
 
 MigrationRunner.prototype.skip = function () {
+  let step = this.steps[this.stepIndex]
+  step.status = stepStatus.skipped
   this.stepIndex++
   this.next()
 }
@@ -286,9 +297,12 @@ MigrationRunner.prototype.stop = function () {
 
 MigrationRunner.prototype.pause = function () {
   this.pause = true
-  // todo: implement pause, later....
+  // todo: implement pause.. later....
 }
 
-MigrationRunner.prototype.constructor = EventEmitter
+MigrationRunner.prototype.validate = function () {
+  // todo: this could look at the migration and do some pre-checks
+  // like pre-render all the steps and report errors. whee.
+}
 
 module.exports = MigrationRunner

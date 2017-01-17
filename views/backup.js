@@ -11,7 +11,7 @@ const check = '✓'
 
 module.exports = {
   show: function (app) {
-    let self = this
+    var self = this
     let screen = app.screen({
       height: '90%',
       width: '90%'
@@ -30,8 +30,6 @@ module.exports = {
       keys: true,
       width: 'shrink',
       height: '70%',
-      vi: true,
-      mouse: true,
       style: {
         border: {
           fg: 'red'
@@ -41,7 +39,7 @@ module.exports = {
           bold: true
         },
         cell: {
-          fg: 'magenta',
+          fg: 'white',
           selected: {
             bg: 'blue'
           }
@@ -71,33 +69,33 @@ module.exports = {
     //   label: 'Loading Schema...'
     // })
 
-    // todo: get this passed in somewhere.
-    var conf = {
-      host: 'localhost',
-      name: 'ross',
-      user: 'sql_pg',
-      password: 'abc123'
-    }
-
-    var db = factory.create('postgres', conf)
+    var db = factory.create(app.env.vendor, app.env)
 
     db.on('error', function (err) {
       msg.error(err)
     })
 
     db.getSchema().then(function (schema) {
-      var headers = ['include', 'data', 'type', 'schema', 'name']
-      var tables = schema.tables.map(function (table) {
-        return [ check, ' ', 'table', table.schema, table.name ]
-      })
-      // stash it for later.
       self.schema = schema
-      self.data = headers.concat(tables)
+      let rows = [
+        ['include', 'data', 'type', 'schema', 'name']
+      ]
+
+      if (schema.tables) {
+        schema.tables.forEach(function (table) {
+          rows.push([ check, ' ', 'table', table.schema, table.name ])
+        })
+      } else {
+        msg.log("You ain't got no tables fool!")
+      }
+
+      self.data = rows
       objects.setData(self.data)
       objects.show()
+      objects.focus()
       screen.render()
     }).catch(function (err) {
-      msg.error(err, 10)
+      msg.error(err.stack, 10)
     })
 
     objects.on('action', function (item) {
@@ -115,7 +113,7 @@ module.exports = {
       screen.render()
     })
 
-    var backup = new BackupRunner(conf)
+    var backup = new BackupRunner(app.env)
 
     backup.on('log', function () {
       // todo: do some stuff.
@@ -126,7 +124,7 @@ module.exports = {
       left: 5,
       border: 'line',
       width: 'shrink',
-      style: { },
+      style: app.buttonStyle,
       bottom: 0,
       content: 'Start'
     })
