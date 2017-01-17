@@ -1,6 +1,6 @@
 'use strict'
 
-/* global describe it */
+/* global describe it, xit */
 const expect = require('chai').expect
 const factory = require('../../lib/database.js')
 
@@ -11,6 +11,29 @@ describe('my shitty postgres wrapper', function () {
     user: 'sql_pg',
     password: 'abc123'
   })
+
+  // relies on the getTables spec to work properly...
+  function expectTableNotToExist (name) {
+    return db.getAllTables()
+      .then(function (tables) {
+        tables.forEach(function (t) {
+          let id = t.schema + '.' + t.name
+          expect(id).not.to.equal(name)
+        })
+      })
+  }
+
+  function expectTableToExist (name) {
+    return db.getAllTables()
+      .then(function (tables) {
+        let exists = tables.some(function (t) {
+          let id = t.schema + '.' + t.name
+          return id === name
+        })
+
+        expect(exists).to.equal(true)
+      })
+  }
 
   db.on('error', function (err) { console.error(err) })
 
@@ -23,33 +46,37 @@ describe('my shitty postgres wrapper', function () {
       })
   })
 
-  it('can inspect the keys of a database', function () {
-    return db.getKeys().then(function (keys) {
-      expect(keys).to.exist
-      expect(keys.length).to.be.greaterThan(0)
-    })
-  })
-
-  it('can drop fucking tables', function () {
-    return db.run('drop table sales.visit')
+  it('can drop tables', function () {
+    return db.run('drop table "sales"."visit"')
       .then(function (res) {
         expect(res).not.to.be.undefined
+        return expectTableNotToExist('sales.visit')
       })
   })
 
-  it('can create fucking tables', function () {
-    return db.run('create table sales.visit(date timestamptz)')
+  it('can create tables', function () {
+    return db.run('create table "sales"."visit"(date timestamptz primary key)')
       .then(function (res) {
         expect(res).not.to.be.undefined
+
+        // todo: expect the table to actually have been created
+        return expectTableToExist('sales.visit')
       })
   })
 
-  it('can insert values into fucking tables', function () {
+  it('can insert values into tables', function () {
     return db.run('insert into sales.visit(date) values ($1)', [new Date()])
       .then(function (res) {
         expect(res).not.to.be.undefined
         expect(res.rowCount).to.equal(1)
       })
+  })
+
+  it('can dump the keys of a database', function () {
+    return db.getKeys().then(function (keys) {
+      expect(keys).to.exist
+      expect(keys.length).to.be.greaterThan(0)
+    })
   })
 
   it('can dump tables', function () {
@@ -60,16 +87,18 @@ describe('my shitty postgres wrapper', function () {
       })
   })
 
-  it('can dump columns', function (done) {
+  it('can dump columns', function () {
     return db.getAllColumns()
       .then(function (res) {
         expect(res).to.be.an('array')
         expect(res.length).to.be.greaterThan(0)
-        done()
       })
   })
 
-  it('can dump schema info', function () {
+  xit('can dump functions')
+  xit('can dump views')
+
+  it('can dump FULL schema info', function () {
     return db.getSchema()
       .then(function (schema) {
         expect(schema).to.be.an('object')

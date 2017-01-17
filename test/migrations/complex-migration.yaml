@@ -8,6 +8,9 @@ dbs:
 - vendor: originations.Vendor
 
 steps:
+- run: init_marketing_db
+  as: @admin
+
 - drop.table: foo.bar
   on: captive
 

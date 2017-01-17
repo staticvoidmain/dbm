@@ -56,6 +56,7 @@ Step.prototype.getPath = function () {
   return path.join(this.root, (this.path || convention))
 }
 
+// TODO: support capturing the 'as' attribute
 function RunStep (i, key, step) {
   Step.call(this, i, 'run')
   this.root = step.root
@@ -101,7 +102,8 @@ DropObject.prototype.render = function (sqlgen) {
         columns: [] // doesn't matter, we're dropping it
       })
 
-      this.query = table.drop().ifExists().toQuery().text
+      // todo: restore safe drops
+      this.query = table.drop().toQuery().text + ';'
     } else {
       // todo: not cross-vendor, or even very good.
       this.query = `drop ${this.type} ${this.name};`
@@ -223,12 +225,11 @@ MigrationRunner.prototype.sortSteps = function () {
 }
 
 MigrationRunner.prototype.start = function () {
-  if (this.status) {
-    return
+  if (!this.started) {
+    this.log('Migration Started: ' + this.config)
+    this.next()
+    this.started = true
   }
-
-  this.log('Migration Started')
-  this.next()
 }
 
 MigrationRunner.prototype.next = function () {
@@ -256,6 +257,9 @@ MigrationRunner.prototype.next = function () {
 
   self.log('query: \n' + query)
 
+  // TODO!! if the step has the 'as' attribute,
+  // then swap out the connection for one that connects as the other user
+  // this allows even administrative changes to work nicely
   this.db.run(query).then(function (result) {
     self.log('Step Completed')
 
@@ -275,6 +279,7 @@ MigrationRunner.prototype.next = function () {
 }
 
 MigrationRunner.prototype.retry = function () {
+  this.paused = false
   this.next()
 }
 
@@ -302,7 +307,18 @@ MigrationRunner.prototype.pause = function () {
 
 MigrationRunner.prototype.validate = function () {
   // todo: this could look at the migration and do some pre-checks
-  // like pre-render all the steps and report errors. whee.
+  let self = this
+  self.steps.forEach(function (step) {
+    // pre-render all the steps
+    try {
+      self.emit('log', 'pre-rendering: ' + step.toString())
+      step.render(self.sqlgen)
+    } catch (err) {
+      self.emit('error', err)
+    }
+  })
+
+  // todo: ensure create has drop
 }
 
 module.exports = MigrationRunner

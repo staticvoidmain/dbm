@@ -72,6 +72,7 @@ module.exports = {
       log('{red-fg}' + err + '{/red-fg}')
     })
 
+    runner.validate()
     var steps = blessed.list({
       label: 'steps',
       parent: screen,

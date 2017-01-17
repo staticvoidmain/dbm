@@ -17,14 +17,13 @@ describe('this goddamn migration runner', function () {
 
     var runner = new MigrationRunner(doc, {
       vendor: 'postgres',
-      host: 'localhost',
       name: 'ross',
       user: 'sql_pg',
       password: 'abc123'
     })
 
     runner.on('step', function (step) {
-      console.log(step)
+      console.log(step.status + ' ' + step.toString())
     })
 
     runner.on('done', function () {
@@ -35,9 +34,12 @@ describe('this goddamn migration runner', function () {
     })
 
     runner.on('error', function (err) {
+      console.error(err)
       expect(err).not.to.exist
+      done()
     })
 
+    runner.validate()
     runner.start()
   })
 })
