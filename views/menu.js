@@ -98,6 +98,12 @@ module.exports = {
       }
     })
 
+    fm.key('backspace', function () {
+      let up = fm.getItem(0)
+      // todo: actually trigger the back action...
+      fm.select(up)
+    })
+
     fm.on('file', function (file) {
       // todo: maybe move this into the migration runner?
       let isJson = file.endsWith('.js') || file.endsWith('.json')

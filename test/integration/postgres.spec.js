@@ -4,7 +4,6 @@
 const expect = require('chai').expect
 const factory = require('../../lib/database.js')
 
-
 describe('my shitty postgres wrapper', function () {
   let db = factory.create('postgres', {
     host: 'localhost',

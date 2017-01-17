@@ -72,16 +72,10 @@ module.exports = {
         right: 2
       },
       left: 2,
-      top: '90%',
+      bottom: 0,
       name: 'next_button',
       content: '[ Login ]',
-      style: {
-        bg: 'blue',
-        fg: 'black',
-        focus: {
-          bg: 'magenta'
-        }
-      }
+      style: app.buttonStyle
     })
 
     let showMenu = function () {
