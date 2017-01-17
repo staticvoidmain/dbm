@@ -1,5 +1,5 @@
 create table Sales.Lead(
-  id int not null,
+  id int primary key,
   product_id int not null,
   contact_id int not null
 );

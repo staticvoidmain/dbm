@@ -167,7 +167,8 @@ module.exports = {
         }
       }
 
-      backup.run(this.schema, app.env)
+      backup.run(self.schema)
+      msg.log('backup complete!')
     })
 
     screen.render()

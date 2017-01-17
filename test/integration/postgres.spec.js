@@ -23,6 +23,13 @@ describe('my shitty postgres wrapper', function () {
       })
   })
 
+  it('can inspect the keys of a database', function () {
+    return db.getKeys().then(function (keys) {
+      expect(keys).to.exist
+      expect(keys.length).to.be.greaterThan(0)
+    })
+  })
+
   it('can drop fucking tables', function () {
     return db.run('drop table sales.visit')
       .then(function (res) {

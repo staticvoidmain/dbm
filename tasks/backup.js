@@ -5,6 +5,7 @@ const EventEmitter = require('events')
 const factory = require('../lib/database')
 const sql = require('sql')
 const fs = require('fs')
+const path = require('path')
 
 // todo: find and replace all my hard coded bullshit
 // and make it nicer.
@@ -15,27 +16,64 @@ function BackupRunner (options) {
 
 inherits(BackupRunner, EventEmitter)
 
-BackupRunner.prototype.run = function (schema) {
-  let path = 'c:/dev/projects/dbm/test/backup.sql'
+BackupRunner.prototype.run = function (schema, options) {
+  let self = this
+
+  if (!schema) {
+    throw Error('I need a schema fool')
+  }
+
+  // TODO!! None of these options actually exist or are able to
+  // be specified by callers, it is always undefined.
+  options = options || {}
+  let backupName = options.backupName || 'backup.sql'
+  let backupPath = options.backupPath || process.env.HOME
+  let sqlgen = self.sqlgen
+
+  if (!options.scriptPerObject) {
+    let filePath = path.join(backupPath, backupName)
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+  }
 
   if (schema.tables) {
     schema.tables.forEach(function (table) {
-      let tableGenerator = sql.define({
+      let tableGenerator = sqlgen.define({
         name: table.name,
-        schema: table.schema
+        schema: table.schema,
+        columns: []
       })
 
       table.columns.forEach(function (col) {
         tableGenerator.addColumn({
+          // todo: these columns and generators
+          // are a little fiddly
           name: col.name,
           precision: col.precision,
-          dataType: col.dataType
+          dataType: col.type,
+          defaultValue: col.defaultValue,
+          notNull: !col.isNullable
         })
       })
 
-      let text = tableGenerator.create().toQuery().text
+      let q = tableGenerator.create()
 
-      fs.writeFileSync(path, text)
+      if (options.safe) {
+        q = q.ifNotExists()
+      }
+
+      if (options.scriptPerObject) {
+        backupName = table.schema + '.' + table.name + '.sql'
+      }
+
+      // add platform batch separator?
+      let text = q.toQuery().text + self.db.separator
+      
+      fs.appendFileSync(
+        path.join(backupPath, backupName), text, 'utf8')
+
+      self.emit('done')
     })
   }
 }

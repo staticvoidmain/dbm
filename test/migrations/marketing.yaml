@@ -1,7 +1,10 @@
 ---
 name: Marketing database v1
 db: ross
+user: pg_sql
 steps:
+- run: init_marketing_db
+  as: admin
 - create.table: Sales.Contact
 - create.table: Sales.Customer
 - create.table: Sales.Lead

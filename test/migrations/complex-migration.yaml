@@ -2,6 +2,7 @@
 name: my-first-migration
 disableStepSort: true
 disableBackups: true
+singleTransaction: true
 dbs:
 - captive: reporting.Captive
 - vendor: originations.Vendor
@@ -9,6 +10,8 @@ dbs:
 steps:
 - drop.table: foo.bar
   on: captive
+
+- begin.transcation: stuff
 
 - create.table: My.Table
   from: tables/my.table.sql
@@ -21,6 +24,8 @@ steps:
 - create.view: My.View 
   from: views/my_view.sql
   on: captive
+
+- commit.transaction: stuff
 
 - create.proc: My.Proc
   from: procs/my_proc.sql
