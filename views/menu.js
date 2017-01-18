@@ -18,11 +18,10 @@ module.exports = {
         }
       },
       keys: true,
-      hidden: false,
       height: 'half',
       width: 'half',
-      top: 'center',
-      left: 'center'
+      top: 5,
+      left: 5
     })
 
     menu.add('Backup:   export the schema and data to the file-system')

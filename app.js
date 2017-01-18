@@ -7,8 +7,6 @@ const blessed = require('blessed')
 // const login = require('./views/login.js')
 const menu = require('./views/menu.js')
 
-// blessed forces a lot of duplicate declarations of common things.
-// like, if I want vi-mode then... like... wtf.
 var app = {
   // todo: these are just temp settings
   env: {
@@ -20,12 +18,9 @@ var app = {
   },
   screen_settings: {
     debug: true,
-    border: {
-      type: 'line', fg: 'cyan'
-    },
     cursor: {
       shape: 'underline',
-      color: 'cyan',
+      color: 'blue',
       blink: true
     },
     /* not sure about these settings.. */
@@ -33,14 +28,41 @@ var app = {
     // terminal: 'xterm',
     // fullUnicode: true,
     // warnings: true,
-    // autoPadding: true,
     smartCSR: true
   },
-  buttonStyle: {
-    bg: 'blue',
-    fg: 'white',
-    focus: {
-      bg: 'magenta'
+  styles: {
+    button: {
+      bg: 'blue',
+      fg: 'white',
+      focus: {
+        bg: 'magenta'
+      }
+    },
+    listtable: {
+      border: {
+        type: 'line',
+        fg: 'cyan'
+      },
+      header: {
+        fg: 'blue',
+        bold: 'true'
+      },
+      cell: {
+        fg: 'white',
+        selected: {
+          bg: 'blue'
+        }
+      }
+    },
+    listbar: {
+      bg: 'black',
+      item: {
+        fg: 'white',
+        bg: 'cyan'
+      },
+      selected: {
+        bg: 'blue'
+      }
     }
   },
   screen: function (opt) {
@@ -54,14 +76,5 @@ var app = {
   }
 }
 
-// // todo: sprinkle in some emacs-like keybindings.
-// let exists = fs.existsSync('creds.yml')
-
-// if (exists) {
-//   app.creds = fs.readFileSync('creds.yml', 'utf8')
-//   menu.show(app)
-// } else {
-//   login.show(app)
-// }
-
 menu.show(app)
+// login.show(app)

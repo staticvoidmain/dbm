@@ -75,7 +75,7 @@ module.exports = {
       bottom: 0,
       name: 'next_button',
       content: '[ Login ]',
-      style: app.buttonStyle
+      style: app.styles.button
     })
 
     let showMenu = function () {

@@ -52,8 +52,7 @@ module.exports = {
       border: 'line',
       style: {
         selected: {
-          bg: 'blue',
-          bold: true
+          bg: 'blue'
         }
       },
       height: '100%-5',
@@ -84,7 +83,6 @@ module.exports = {
       parent: screen,
       tags: true,
       border: 'line',
-      label: ' {blue-fg}{bold}Contents{/bold}{/blue-fg}',
       top: 5,
       left: '50%+1',
       width: '50%-2',

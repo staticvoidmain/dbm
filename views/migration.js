@@ -93,22 +93,10 @@ module.exports = {
 
     var bar = blessed.listbar({
       parent: screen,
-      label: 'commands',
       autoCommandKeys: true,
       width: 'shrink',
       height: 1,
-      keys: true,
-      style: {
-        item: {
-          bg: 'red',
-          focus: {
-            bg: 'blue'
-          }
-        },
-        selected: {
-          bg: 'blue'
-        }
-      },
+      style: app.listbarStyle,
       heigth: 3,
       left: 5,
       bottom: 1,

@@ -11,52 +11,28 @@ const check = 'Y'
 
 module.exports = {
   show: function (app) {
-    var self = this
+    let self = this
+    let flags = []
     let screen = app.screen({
       height: '100%',
       width: '100%'
     })
 
-    let form = blessed.form({
-      parent: screen,
-      keys: true,
-      autoNext: true
-    })
-
-    // let box = blessed.box({
-    //   label: 'Backup Database'
-    // })
-
+    // todo: form for all my lovely config options.
     let objects = blessed.listtable({
       label: 'Objects',
       hidden: true,
-      parent: form,
+      parent: screen,
       top: 'center',
       left: 'center',
-      border: 'line',
       align: 'center',
       tags: true,
       keys: true,
       width: '70%',
       height: '70%',
-      style: {
-        border: {
-          fg: 'red'
-        },
-        header: {
-          fg: 'blue',
-          bold: true
-        },
-        cell: {
-          fg: 'white',
-          selected: {
-            bg: 'blue'
-          }
-        }
-      }
+      style: app.styles.listtable
     })
 
-    // todo: might have to handle focus myself.
     var msg = blessed.message({
       parent: screen,
       border: 'line',
@@ -76,42 +52,8 @@ module.exports = {
       msg.error(err)
     })
 
-    let flags = []
-    db.getSchema().then(function (schema) {
-      self.schema = schema
-      let rows = [
-        ['include', 'data', 'type', 'schema', 'name']
-      ]
-
-      if (schema.tables) {
-        schema.tables.forEach(function (table) {
-          rows.push([ check, ' ', 'table', table.schema, table.name ])
-          flags.push(table)
-        })
-      } else {
-        msg.log("You ain't got no tables fool!")
-      }
-
-      self.data = rows
-      objects.setData(self.data)
-      objects.show()
-      objects.focus()
-      screen.render()
-    }).catch(function (err) {
-      msg.error(err.stack, 10)
-    })
-
-    objects.key('y', function () {
-      // toggle things on.
-    })
-
-    objects.key('n', function () {
-      // toggle things off.
-    })
-
     // what about space.
     objects.on('action', function (item) {
-      // toggle in order: include, data, none
       let i = objects.getItemIndex(item)
       let line = self.data[i]
 
@@ -138,39 +80,152 @@ module.exports = {
     backup.on('error', (err) => msg.error(err))
     backup.on('done', () => msg.log('backup complete!'))
 
-    let start = blessed.button({
-      parent: form,
-      left: 5,
-      bottom: 1,
-      style: app.buttonStyle,
+    let configuration = blessed.form({
+      draggable: true,
+      label: 'Backup Config',
       keys: true,
-      mouse: true,
-      height: 1,
-      content: '[ Start ]',
-      padding: {
-        left: 2,
-        right: 2
+      hidden: true,
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      width: 'shrink',
+      height: '50%',
+      border: 'line',
+      style: {
+        bg: 'black'
       }
     })
 
-    start.on('press', function () {
-      let data = self.data.slice(1)
+    blessed.text({
+      width: 'half',
+      parent: configuration,
+      tags: true,
+      style: { fg: 'white' },
+      content: '{bold}Backup Path:{/bold}',
+      top: 1,
+      left: 4,
+      right: 4
+    })
 
-      if (flags.length) {
-        for (let i = 0; i < data.length; data++) {
-          let row = data[i]
+    var backupPath = blessed.textbox({
+      parent: configuration,
+      height: 1,
+      name: 'username',
+      style: { bg: 'white', fg: 'black' },
+      top: 2,
+      left: 4,
+      right: 4
+    })
 
-          if (row[0] === 'Y') {
-            flags[i].include = true
+    blessed.text({
+      tags: true,
+      parent: configuration,
+      style: { fg: 'white' },
+      content: '{bold}Backup Name:{/bold}',
+      top: 4,
+      left: 4,
+      right: 4
+    })
 
-            if (row[1] === 'Y') {
-              flags[i].data = true
+    var backupName = blessed.textbox({
+      parent: configuration,
+      height: 1,
+      style: { bg: 'white', fg: 'black' },
+      name: 'password',
+      top: 5,
+      left: 4,
+      right: 4
+    })
+
+    blessed.text({
+      tags: true,
+      parent: configuration,
+      style: { fg: 'white' },
+      top: 6,
+      left: 4,
+      right: 4
+    })
+
+    let scriptPerObject = blessed.checkbox({
+      tags: true,
+      keys: true,
+      height: 1,
+      shrink: true,
+      name: 'scriptPerObject',
+      parent: configuration,
+      content: '{bold}Split Scripts{/bold}',
+      top: 7,
+      left: 4,
+      right: 4
+    })
+
+    backupPath.on('focus', function () { backupPath.readInput() })
+    backupName.on('focus', function () { backupName.readInput() })
+
+    blessed.listbar({
+      parent: screen,
+      bottom: 0,
+      height: 'shrink',
+      left: 5,
+      right: 5,
+      autoCommandKeys: true,
+      style: app.styles.listbar,
+      commands: {
+        // todo: more commands!
+        'start backup': function () {
+          let data = self.data.slice(1)
+
+          if (flags.length) {
+            for (let i = 0; i < data.length; data++) {
+              let row = data[i]
+
+              if (row[0] === 'Y') {
+                flags[i].include = true
+
+                if (row[1] === 'Y') {
+                  flags[i].data = true
+                }
+              }
             }
-          }
-        }
 
-        backup.run(self.schema)
+            backup.run(self.schema, {
+              scriptPerObject: scriptPerObject.checked,
+              backupPath: backupPath.content,
+              backupName: backupName.content
+            })
+          }
+        },
+
+        'configure backup': function () {
+          configuration.show()
+          backupPath.focus()
+          screen.render()
+        }
       }
+    })
+
+    db.getSchema().then(function (schema) {
+      self.schema = schema
+      let rows = [
+        ['include', 'data', 'type', 'schema', 'name']
+      ]
+
+      if (schema.tables) {
+        schema.tables.forEach(function (table) {
+          rows.push([check, ' ', 'table', table.schema, table.name])
+          flags.push(table)
+        })
+      } else {
+        msg.log("You ain't got no tables fool!")
+      }
+
+      self.data = rows
+      objects.setData(self.data)
+      objects.show()
+      objects.focus()
+      screen.render()
+    }).catch(function (err) {
+      msg.error(err.stack, 10)
     })
 
     screen.render()

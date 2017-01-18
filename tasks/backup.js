@@ -27,7 +27,7 @@ BackupRunner.prototype.run = function (schema, options) {
   // be specified by callers, it is always undefined.
   options = options || {}
   let backupName = options.backupName || 'backup.sql'
-  let backupPath = options.backupPath || process.env.HOME
+  let backupPath = options.backupPath
   let sqlgen = self.sqlgen
 
   if (!options.scriptPerObject) {
@@ -69,7 +69,7 @@ BackupRunner.prototype.run = function (schema, options) {
 
       // add platform batch separator?
       let text = q.toQuery().text + self.db.separator
-      
+     
       fs.appendFileSync(
         path.join(backupPath, backupName), text, 'utf8')
 
