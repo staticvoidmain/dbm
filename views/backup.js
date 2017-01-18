@@ -17,6 +17,12 @@ module.exports = {
       width: '100%'
     })
 
+    let form = blessed.form({
+      parent: screen,
+      keys: true,
+      autoNext: true
+    })
+
     // let box = blessed.box({
     //   label: 'Backup Database'
     // })
@@ -24,7 +30,7 @@ module.exports = {
     let objects = blessed.listtable({
       label: 'Objects',
       hidden: true,
-      parent: screen,
+      parent: form,
       top: 'center',
       left: 'center',
       border: 'line',
@@ -50,6 +56,7 @@ module.exports = {
       }
     })
 
+    // todo: might have to handle focus myself.
     var msg = blessed.message({
       parent: screen,
       border: 'line',
@@ -57,20 +64,11 @@ module.exports = {
       width: 'half',
       top: 'center',
       left: 'center',
-      label: '{red-fg}Error{/red-fg} ',
+      label: 'Info',
       tags: true,
       keys: true,
       hidden: true
     })
-
-    // var loading = blessed.loading({
-    //   parent: screen,
-    //   top: 'center',
-    //   left: 'center',
-    //   width: 'shrink',
-    //   height: 'shrink',
-    //   label: 'Loading Schema...'
-    // })
 
     var db = factory.create(app.env.vendor, app.env)
 
@@ -111,6 +109,7 @@ module.exports = {
       // toggle things off.
     })
 
+    // what about space.
     objects.on('action', function (item) {
       // toggle in order: include, data, none
       let i = objects.getItemIndex(item)
@@ -136,16 +135,18 @@ module.exports = {
       // todo: do some stuff.
     })
 
+    backup.on('error', (err) => msg.error(err))
+    backup.on('done', () => msg.log('backup complete!'))
+
     let start = blessed.button({
-      parent: screen,
+      parent: form,
       left: 5,
-      width: 'shrink',
+      bottom: 1,
       style: app.buttonStyle,
-      bottom: 0,
       keys: true,
       mouse: true,
+      height: 1,
       content: '[ Start ]',
-      shrink: true,
       padding: {
         left: 2,
         right: 2
@@ -155,20 +156,21 @@ module.exports = {
     start.on('press', function () {
       let data = self.data.slice(1)
 
-      for (let i = 0; i < data.length; data++) {
-        let row = data[i]
+      if (flags.length) {
+        for (let i = 0; i < data.length; data++) {
+          let row = data[i]
 
-        if (row[0] === 'Y') {
-          flags[i].include = true
+          if (row[0] === 'Y') {
+            flags[i].include = true
 
-          if (row[1] === 'Y') {
-            flags[i].data = true
+            if (row[1] === 'Y') {
+              flags[i].data = true
+            }
           }
         }
-      }
 
-      backup.run(self.schema)
-      msg.log('backup complete!')
+        backup.run(self.schema)
+      }
     })
 
     screen.render()

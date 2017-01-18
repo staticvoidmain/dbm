@@ -7,6 +7,7 @@ const EventEmitter = require('events')
 const factory = require('../lib/database.js')
 const fs = require('fs')
 const path = require('path')
+const assert = require('assert')
 
 function identifier (id) {
   let parts = id.split('.')
@@ -97,13 +98,14 @@ DropObject.prototype.render = function (sqlgen) {
 
     if (this.type === 'table') {
       var table = sqlgen.define({
-        name: id.name,
-        schema: id.schema,
-        columns: [] // doesn't matter, we're dropping it
+        // fucking postgres... case sensitive identifiers
+        name: id.name.toLowerCase(),
+        schema: id.schema.toLowerCase(),
+        columns: []
       })
 
       // todo: restore safe drops
-      this.query = table.drop().toQuery().text + ';'
+      this.query = table.drop().ifExists().toQuery().text + ';'
     } else {
       // todo: not cross-vendor, or even very good.
       this.query = `drop ${this.type} ${this.name};`
@@ -151,12 +153,17 @@ function MigrationRunner (doc, env) {
   // saves you if you forget the new keyword.
   EventEmitter.call(this)
 
+  assert(doc, 'Must supply a valid document')
+  assert(env, 'Must supply a valid environment config')
+
   this.root = path.dirname(doc.path)
   this.sqlgen = sql.create(env.vendor, {})
   this.activeStep = null
   this.stepIndex = 0
   this.stepCount = doc.steps.length
   this.steps = this.createSteps(doc)
+  this.doc = doc
+  this.env = env
 
   // lazy create them? // we might need multiple connections of different types
   // in the worst case scenario...
@@ -226,7 +233,8 @@ MigrationRunner.prototype.sortSteps = function () {
 
 MigrationRunner.prototype.start = function () {
   if (!this.started) {
-    this.log('Migration Started: ' + this.config)
+    this.log('Migration Started: ' + this.doc.name)
+    this.log('Details: ' + JSON.stringify(this.env))
     this.next()
     this.started = true
   }

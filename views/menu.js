@@ -1,26 +1,15 @@
 'use strict'
 
-const fs = require('fs')
 const blessed = require('blessed')
-const yaml = require('js-yaml')
-const migration = require('./migration.js')
 const backupView = require('./backup.js')
+const selectMigration = require('./selectMigration.js')
 
 module.exports = {
   show: function (app) {
     var screen = app.screen()
-    var box = blessed.box({
-      label: 'Main Menu',
-      parent: screen,
-      border: 'line',
-      width: '90%',
-      height: '80%',
-      tags: true
-    })
 
-    // todo: here we let them... select the operation to perform
     var menu = blessed.list({
-      parent: box,
+      parent: screen,
       label: 'Tasks',
       border: 'line',
       style: {
@@ -43,94 +32,17 @@ module.exports = {
 
     menu.on('action', function (item, i) {
       if (i === 0) {
-        backup()
+        backupView.show(app)
       } else if (i === 1) {
-        migrate()
+        selectMigration.show(app)
+      } else if (i === 2) {
+        // todo
+      } else if (i === 3) {
+        // todo
       }
+
+      screen.destroy()
       // todo: all the rest
-    })
-
-    function backup () {
-      backupView.show(app)
-      screen.destroy()
-    }
-
-    function migrate () {
-      menu.hide()
-      fm.refresh()
-      fm.show()
-      fm.focus()
-    }
-
-    var msg = blessed.message({
-      parent: screen,
-      border: 'line',
-      height: 'shrink',
-      width: 'half',
-      top: 'center',
-      left: 'center',
-      label: '{red-fg}Error{/red-fg} ',
-      tags: true,
-      keys: true,
-      hidden: true
-    })
-
-    // todo: file manager with a path, to support network drives and such
-    var fm = blessed.filemanager({
-      parent: box,
-      border: 'line',
-      style: {
-        selected: {
-          bg: 'blue'
-        }
-      },
-      hidden: true,
-      height: 'half',
-      width: 'half',
-      top: 'center',
-      left: 'center',
-      label: ' {blue-fg}%path{/blue-fg}',
-      cwd: process.env.DBM_HOME,
-      keys: true,
-      scrollbar: {
-        bg: 'white',
-        ch: ' '
-      }
-    })
-
-    fm.key('backspace', function () {
-      let up = fm.getItem(0)
-      // todo: actually trigger the back action...
-      fm.select(up)
-    })
-
-    fm.on('file', function (file) {
-      // todo: maybe move this into the migration runner?
-      let isJson = file.endsWith('.js') || file.endsWith('.json')
-      let isYaml = file.endsWith('.yml') || file.endsWith('.yaml')
-      let doc = null
-
-      if (isYaml || isJson) {
-        let contents = fs.readFileSync(file)
-
-        try {
-          if (isYaml) {
-            doc = yaml.safeLoad(contents)
-          } else {
-            doc = JSON.parse(contents)
-          }
-
-          doc.path = file
-        } catch (ex) {
-          // TODO: error logging? we could hang it off app like all the other global shit.
-          msg.error(ex)
-          return
-        }
-
-        migration.show(app, doc)
-      }
-
-      screen.destroy()
     })
 
     menu.focus()

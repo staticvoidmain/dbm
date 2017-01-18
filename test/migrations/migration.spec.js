@@ -22,6 +22,10 @@ describe('this goddamn migration runner', function () {
       password: 'abc123'
     })
 
+    runner.on('log', function (msg) {
+      console.log(msg)
+    })
+
     runner.on('step', function (step) {
       console.log(step.status + ' ' + step.toString())
     })

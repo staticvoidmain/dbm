@@ -20,9 +20,12 @@ var app = {
   },
   screen_settings: {
     debug: true,
+    border: {
+      type: 'line', fg: 'cyan'
+    },
     cursor: {
       shape: 'underline',
-      color: 'blue',
+      color: 'cyan',
       blink: true
     },
     /* not sure about these settings.. */
@@ -35,7 +38,7 @@ var app = {
   },
   buttonStyle: {
     bg: 'blue',
-    fg: 'black',
+    fg: 'white',
     focus: {
       bg: 'magenta'
     }
