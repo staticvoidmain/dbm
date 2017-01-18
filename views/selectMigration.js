@@ -5,9 +5,10 @@ const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
 const migration = require('./migration.js')
+const emphasize = require('emphasize')
 
 function testFileExtension (file) {
-  let isJson = file.endsWith('.js') || file.endsWith('.json')
+  let isJson = file.endsWith('.json')
   let isYaml = file.endsWith('.yml') || file.endsWith('.yaml')
 
   return {
@@ -17,17 +18,18 @@ function testFileExtension (file) {
 }
 
 module.exports = {
+  // notes: these positions are pretty tightly fiddled with.
   show: function (app) {
     var screen = app.screen()
-    var prompt = blessed.prompt({
+    // this is annoying...
+    var input = blessed.textbox({
       parent: screen,
+      top: 2,
       left: 0,
-      top: 0,
-      height: 4,
-      width: 'half',
-      keys: true,
-      tags: true,
+      height: 'shrink',
+      width: '25%',
       border: 'line',
+      label: 'Search: ',
       hidden: true
     })
 
@@ -54,8 +56,8 @@ module.exports = {
           bold: true
         }
       },
-      height: 'half',
-      width: '50%-1',
+      height: '100%-5',
+      width: '50%-2',
       top: 5,
       left: 0,
       label: ' {blue-fg}%path{/blue-fg}',
@@ -63,14 +65,18 @@ module.exports = {
       vi: true,
       keys: true,
       scrollbar: {
-        bg: 'white',
+        bg: 'yellow',
         ch: ' '
       },
       search: function (callback) {
-        prompt.input('{bold}Find:{/bold}', '', function (err, value) {
+        input.show()
+        input.readInput(function (err, value) {
+          input.hide()
+          screen.restoreFocus()
           if (err) return
           return callback(null, value)
         })
+        screen.render()
       }
     })
 
@@ -81,8 +87,12 @@ module.exports = {
       label: ' {blue-fg}{bold}Contents{/bold}{/blue-fg}',
       top: 5,
       left: '50%+1',
-      width: '50%-1',
-      height: 'half',
+      width: '50%-2',
+      height: '100%-5',
+      scrollbar: {
+        bg: 'yellow',
+        ch: ' '
+      },
       content: ''
     })
 
@@ -100,8 +110,12 @@ module.exports = {
 
           if (test.isYaml || test.isJson) {
             let content = fs.readFileSync(file, 'utf8')
+            let formatted = test.isYaml
+              ? emphasize.highlight('yaml', content)
+              : emphasize.highlight('json', content)
+
             preview.setLabel(value)
-            preview.setContent(content)
+            preview.setContent(formatted.value)
             screen.render()
           }
         }
@@ -142,4 +156,3 @@ module.exports = {
     screen.render()
   }
 }
-

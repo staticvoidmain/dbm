@@ -23,6 +23,7 @@
   "homepage": "https://github.com/staticvoidmain/dbm#readme",
   "dependencies": {
     "blessed": "^0.1.81",
+    "emphasize": "^1.2.0",
     "js-yaml": "^3.7.0",
     "sql": "^0.73.0"
   },
