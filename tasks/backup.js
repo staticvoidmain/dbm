@@ -69,7 +69,7 @@ BackupRunner.prototype.run = function (schema, options) {
 
       // add platform batch separator?
       let text = q.toQuery().text + self.db.separator
-     
+
       fs.appendFileSync(
         path.join(backupPath, backupName), text, 'utf8')
 

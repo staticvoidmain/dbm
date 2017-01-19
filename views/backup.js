@@ -30,6 +30,10 @@ module.exports = {
       keys: true,
       width: '70%',
       height: '70%',
+      border: {
+        fg: 'cyan',
+        type: 'line'
+      },
       style: app.styles.listtable
     })
 
@@ -81,7 +85,7 @@ module.exports = {
     backup.on('done', () => msg.log('backup complete!'))
 
     let configuration = blessed.form({
-      draggable: true,
+      shadow: true,
       label: 'Backup Config',
       keys: true,
       hidden: true,
@@ -110,7 +114,7 @@ module.exports = {
     var backupPath = blessed.textbox({
       parent: configuration,
       height: 1,
-      name: 'username',
+      name: 'backupPath',
       style: { bg: 'white', fg: 'black' },
       top: 2,
       left: 4,
@@ -131,7 +135,7 @@ module.exports = {
       parent: configuration,
       height: 1,
       style: { bg: 'white', fg: 'black' },
-      name: 'password',
+      name: 'backupName',
       top: 5,
       left: 4,
       right: 4
@@ -155,12 +159,54 @@ module.exports = {
       parent: configuration,
       content: '{bold}Split Scripts{/bold}',
       top: 7,
-      left: 4,
-      right: 4
+      left: 4
     })
 
-    backupPath.on('focus', function () { backupPath.readInput() })
-    backupName.on('focus', function () { backupName.readInput() })
+    let safe = blessed.checkbox({
+      tags: true,
+      keys: true,
+      height: 1,
+      shrink: true,
+      name: 'safe',
+      parent: configuration,
+      content: '{bold}if not exists{/bold}',
+      top: 7,
+      left: 25
+    })
+
+    let tip = blessed.text({
+      padding: 4,
+      left: 4,
+      right: 4,
+      top: 11,
+      bottom: 4,
+      tags: true,
+      keys: false,
+      content: '',
+      border: 'line',
+      label: 'about',
+      parent: configuration
+    })
+
+    backupPath.value = (process.env.DBM_HOME || process.cwd())
+    backupName.value = ('backup.sql')
+
+    scriptPerObject.on('focus', function () {
+      tip.setContent('Saves a separate file per object backed up, to the specified backup path.\nOverrides backup name.')
+      screen.render()
+    })
+
+    backupPath.on('focus', function () {
+      tip.setContent('Folder when saving the backup.')
+      backupPath.readInput()
+      screen.render()
+    })
+
+    backupName.on('focus', function () {
+      tip.setContent('File name if using single file backup.')
+      backupName.readInput()
+      screen.render()
+    })
 
     blessed.listbar({
       parent: screen,
@@ -190,15 +236,16 @@ module.exports = {
 
             backup.run(self.schema, {
               scriptPerObject: scriptPerObject.checked,
-              backupPath: backupPath.content,
-              backupName: backupName.content
+              backupPath: backupPath.getValue(),
+              backupName: backupName.getValue(),
+              safe: safe.checked
             })
           }
         },
 
         'configure backup': function () {
           configuration.show()
-          backupPath.focus()
+          configuration.focusFirst()
           screen.render()
         }
       }

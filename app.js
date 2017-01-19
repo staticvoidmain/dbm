@@ -39,15 +39,19 @@ var app = {
       }
     },
     listtable: {
+      selected: {
+        bg: 'blue'
+      },
       border: {
         type: 'line',
         fg: 'cyan'
       },
       header: {
         fg: 'blue',
-        bold: 'true'
+        underline: true
       },
       cell: {
+        border: 'line',
         fg: 'white',
         selected: {
           bg: 'blue'
