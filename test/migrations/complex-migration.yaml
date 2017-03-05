@@ -3,13 +3,13 @@ name: my-first-migration
 disableStepSort: true
 disableBackups: true
 singleTransaction: false
-dbs:
+aliases:
 - captive: reporting.Captive
 - vendor: originations.Vendor
 
 steps:
 - run: init_marketing_db
-  as: @admin
+  as: pg_admin
 
 - drop.table: foo.bar
   on: captive

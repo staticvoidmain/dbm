@@ -2,6 +2,7 @@
 
 const blessed = require('blessed')
 const backupView = require('./backup.js')
+const config = require('./config.js')
 const selectMigration = require('./selectMigration.js')
 
 module.exports = {
@@ -28,6 +29,7 @@ module.exports = {
     menu.add('Migrate:  run a set of scripts against the database to create/update or remove db objects')
     menu.add('Analyze:  inspect your database for potential problems.')
     menu.add('Optimize: automatically fix common database performance issues.')
+    menu.add('Config:   configure dbm')
 
     menu.on('action', function (item, i) {
       if (i === 0) {
@@ -38,6 +40,8 @@ module.exports = {
         // todo
       } else if (i === 3) {
         // todo
+      } else if (i === 4) {
+        config.show(app)
       }
 
       screen.destroy()

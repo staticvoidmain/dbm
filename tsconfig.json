@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "dbm.js",
+        "sourceMap": true
+    },
+    "typeRoots": [ "node_modules/@types" ],
+    "include": [
+        "lib/**/*",
+        "tasks/**/*",
+        "views/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts",
+        "**/*.spec.js"
+    ]
+}

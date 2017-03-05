@@ -1,10 +1,7 @@
 
 'use strict'
 
-// todo: should we actually support stand-alone commands too?
-// const fs = require('fs')
 const blessed = require('blessed')
-// const login = require('./views/login.js')
 const menu = require('./views/menu.js')
 
 var app = {
@@ -72,7 +69,7 @@ var app = {
   screen: function (opt) {
     let screen = blessed.screen(Object.assign({}, this.screen_settings, opt))
 
-    screen.key(['C-c', 'q', 'escape'], () => {
+    screen.key([ 'C-c' ], () => {
       screen.destroy()
     })
 
@@ -81,4 +78,3 @@ var app = {
 }
 
 menu.show(app)
-// login.show(app)

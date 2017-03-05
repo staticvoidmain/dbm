@@ -1,19 +1,21 @@
 'use strict'
 
-// global process assert
+/* global process assert */
 
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
+const StringDecoder = require('string_decoder').StringDecoder
 
-function CredentialStore(config) {
+const algorithm = 'aes256'
+
+function CredentialStore (config) {
   if (!config) {
     throw new Error('Config not specified!')
   }
 
   this.new = false
 
-  // todo: search along an array of paths for the file until we find one.
   let locations = [
     process.env.DBM_HOME,
     process.env.HOME,
@@ -50,43 +52,55 @@ function CredentialStore(config) {
   }
 }
 
-function validateRequest(req) {
+function validateRequest (req) {
   assert(req.env, 'env is required')
   assert(req.server, 'server is required')
   assert(req.db, 'db is required')
-  assert(req.phrase, 'phrase is required')
+  assert(req.user, 'user name is required')
+  assert(req.phrase, 'passphrase is required')
+}
+
+function encrypt (text, password) {
+  let cipher = crypto.createCipher(algorithm, password)
+  
+  return wrap(text).pipe(cipher)
+}
+
+// promisify?
+function decipher (stream, password) {
+  let decipher = crypto.createDecipher(algorithm, password)
+
+  return stream.pipe(decipher)
 }
 
 /**
- * Gets a stored credential by env/server/db from the credential store.
+ * Gets a stored credential by env/server/db/user from the credential store.
  * This value should be transparently passed to the server connection when connecting to that db.
  * @param {Object} req the credential request object
  */
 CredentialStore.prototype.get = function (req, cb) {
   validateRequest(req)
-
-  let decipher = crypto.createDecipher('aes256', req.phrase)
-
-  let decrypted = ''
-  decipher.on('readable', () => {
-    const data = decipher.read()
-    if (data) {
-      decrypted += data.toString('utf8')
-    }
-  })
-
-  decipher.on('error', () => {
-    // I think this is error.
-  })
-
-  decipher.on('end', () => {
-    console.log(decrypted)
-    // Prints: some clear text data
-  })
-
-  this.file.c
+    // it's an FD
+  let stream = fs.createReadStream(this.file, 'utf8')
+  let text = decipher(stream, req.phrase)
 
   // todo: decrypt the file.
   // find the path.
   // do some stuff.
+}
+
+CredentialStore.prototype.set = (req) => {
+  validateRequest(req)
+  let env = req.env
+  let srv = req.srv
+  let db = req.db
+  let user = req.user
+  let path = `$env/$srv/$db/$user`
+
+  let clearText = decrypt()
+
+
+  let output = fs.createWriteStream(this.file)
+
+  encrypt(newText).pipe(output)
 }

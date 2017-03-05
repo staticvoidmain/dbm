@@ -88,12 +88,10 @@ const columns = sqlgen.define({
   ]
 })
 
-// TODO
 /*
-
+  this query fetches all primary and secondary keys on all objects in the database.
  */
-
-const lazyFetchAllKeys = `
+const fetchAllKeys = `
 SELECT
   pg_namespace.nspname as tableSchema,
   pg_class.relname as tableName,
@@ -167,7 +165,7 @@ function mergeResults (values) {
 const varchar = 'character varying'
 const char = 'character'
 
-// hacky
+// todo: there are probably more.
 function coerceColumnTypes (columns) {
   for (let i = 0; i < columns.length; i++) {
     let col = columns[i]
@@ -208,8 +206,8 @@ PostgresDb.prototype.run = function (statement, args) {
 PostgresDb.prototype.getSchema = function () {
   return Promise.all([
     this.getAllTables(),
-    this.getAllColumns()
-    // this.getKeys()
+    this.getAllColumns(),
+    this.getKeys()
   ]).then(mergeResults)
 }
 
@@ -230,7 +228,7 @@ PostgresDb.prototype.getAllColumns = function () {
 PostgresDb.prototype.getKeys = function () {
   return pg.connect(this.config)
     .then(function (client) {
-      return client.query(lazyFetchAllKeys, [])
+      return client.query(fetchAllKeys, [])
         .then(function (res) {
           client.end()
           return res.rows.slice()
