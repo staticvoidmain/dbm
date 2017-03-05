@@ -8,6 +8,7 @@ const expect = require('chai').expect
 describe('a statement parser', function () {
   // todo: model all the lovely options.
   var parser = new Parser({
+    vendor: 'mssql',
     separator: 'GO'
   })
 

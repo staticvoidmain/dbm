@@ -2,7 +2,7 @@
 name: my-first-migration
 disableStepSort: true
 disableBackups: true
-singleTransaction: true
+singleTransaction: false
 dbs:
 - captive: reporting.Captive
 - vendor: originations.Vendor
@@ -14,7 +14,7 @@ steps:
 - drop.table: foo.bar
   on: captive
 
-- begin.transcation: stuff
+- begin.transaction: stuff
 
 - create.table: My.Table
   from: tables/my.table.sql

@@ -141,15 +141,6 @@ module.exports = {
       right: 4
     })
 
-    blessed.text({
-      tags: true,
-      parent: configuration,
-      style: { fg: 'white' },
-      top: 6,
-      left: 4,
-      right: 4
-    })
-
     let scriptPerObject = blessed.checkbox({
       tags: true,
       keys: true,
@@ -174,40 +165,38 @@ module.exports = {
       left: 25
     })
 
-    let tip = blessed.text({
-      padding: 4,
+    let tip = blessed.box({
+      padding: 2,
       left: 4,
       right: 4,
-      top: 11,
-      bottom: 4,
+      top: 12,
+      bottom: 3,
       tags: true,
       keys: false,
-      content: '',
+      style: {
+        fg: 'white'
+      },
+      content: 'what is happening? Why is this not showing up. I really wish I picked a different schreen drawing tool...',
       border: 'line',
       label: 'about',
       parent: configuration
     })
 
-    backupPath.value = (process.env.DBM_HOME || process.cwd())
-    backupName.value = ('backup.sql')
+    backupPath.value = process.env.DBM_HOME || process.cwd()
+    backupName.value = 'backup.sql'
 
-    scriptPerObject.on('focus', function () {
-      tip.setContent('Saves a separate file per object backed up, to the specified backup path.\nOverrides backup name.')
-      screen.render()
-    })
+    let lastFocusedElement = null
 
-    backupPath.on('focus', function () {
-      tip.setContent('Folder when saving the backup.')
-      backupPath.readInput()
-      screen.render()
-    })
+    let settingInfo = {
+      'safe': 'Render the create script with an "IF EXISTS"',
+      'scriptPerObject': 'Saves a separate file per object backed up, to the specified backup path.\nOverrides backup name.',
+      'backupPath': 'Folder when saving the backup.',
+      'backupName': 'File name if using single file backup.'
+    }
 
-    backupName.on('focus', function () {
-      tip.setContent('File name if using single file backup.')
-      backupName.readInput()
-      screen.render()
-    })
-
+    // todo: the focus thing...
+    // sadly, we're not going to get nice events...
+    // so this might require a pull request.
     blessed.listbar({
       parent: screen,
       bottom: 0,
