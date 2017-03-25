@@ -23,6 +23,7 @@ export enum stepStatus {
   running,
   complete,
   skipped,
+  canceled,
   failed
 }
 

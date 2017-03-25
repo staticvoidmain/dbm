@@ -1,81 +1,76 @@
 'use strict'
 
-const inherits = require('util').inherits
-const EventEmitter = require('events')
-const factory = require('../lib/database')
-const sql = require('sql')
-const fs = require('fs')
-const path = require('path')
+import { EventEmitter } from 'events'
+import { create as factory } from '../lib/database'
+import * as sql from 'sql'
 
-// todo: find and replace all my hard coded bullshit
-// and make it nicer.
-function BackupRunner (options) {
-  this.sqlgen = sql.create(options.vendor, {})
-  this.db = factory.create(options.vendor, options)
-}
+import { existsSync, unlinkSync, appendFileSync } from 'fs'
+import { join } from 'path'
 
-inherits(BackupRunner, EventEmitter)
+class BackupRunner extends EventEmitter {
+  sqlgen: any
+  db: any
 
-BackupRunner.prototype.run = function (schema, options) {
-  let self = this
+  constructor(options) {
+    super()
 
-  if (!schema) {
-    throw Error('I need a schema fool')
+    this.sqlgen = sql.create(options.vendor, {})
+    this.db = factory(options.vendor, options)
   }
 
-  // TODO!! None of these options actually exist or are able to
-  // be specified by callers, it is always undefined.
-  options = options || {}
-  let backupName = options.backupName || 'backup.sql'
-  let backupPath = options.backupPath
-  let sqlgen = self.sqlgen
-
-  if (!options.scriptPerObject) {
-    let filePath = path.join(backupPath, backupName)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
+  run(schema, options) {
+    if (!schema) {
+      throw Error('I need a schema fool')
     }
-  }
 
-  if (schema.tables) {
-    schema.tables.forEach(function (table) {
-      let tableGenerator = sqlgen.define({
-        name: table.name,
-        schema: table.schema,
-        columns: []
-      })
+    options = options || {}
+    let backupName = options.backupName || 'backup.sql'
+    let backupPath = options.backupPath
+    let sqlgen = this.sqlgen
 
-      table.columns.forEach(function (col) {
-        tableGenerator.addColumn({
-          // todo: these columns and generators
-          // are a little fiddly
-          name: col.name,
-          precision: col.precision,
-          dataType: col.type,
-          defaultValue: col.defaultValue,
-          notNull: !col.isNullable
+    if (!options.scriptPerObject) {
+      let filePath = join(backupPath, backupName)
+      if (existsSync(filePath)) {
+        unlinkSync(filePath)
+      }
+    }
+
+    if (schema.tables) {
+      schema.tables.forEach(function (table) {
+        let tableGenerator = sqlgen.define({
+          name: table.name,
+          schema: table.schema,
+          columns: []
         })
+
+        table.columns.forEach(function (col) {
+          tableGenerator.addColumn({
+            name: col.name,
+            precision: col.precision,
+            dataType: col.type,
+            defaultValue: col.defaultValue,
+            notNull: !col.isNullable
+          })
+        })
+
+        let q = tableGenerator.create()
+
+        if (options.safe) {
+          q = q.ifNotExists()
+        }
+
+        if (options.scriptPerObject) {
+          backupName = table.schema + '.' + table.name + '.sql'
+        }
+
+        // add platform batch separator
+        let text = q.toQuery().text + this.db.separator
+
+        appendFileSync(
+          join(backupPath, backupName), text, 'utf8')
       })
+    }
 
-      let q = tableGenerator.create()
-
-      if (options.safe) {
-        q = q.ifNotExists()
-      }
-
-      if (options.scriptPerObject) {
-        backupName = table.schema + '.' + table.name + '.sql'
-      }
-
-      // add platform batch separator?
-      let text = q.toQuery().text + self.db.separator
-
-      fs.appendFileSync(
-        path.join(backupPath, backupName), text, 'utf8')
-
-      self.emit('done')
-    })
+    this.emit('done')
   }
 }
-
-module.exports = BackupRunner

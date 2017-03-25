@@ -1,7 +1,6 @@
-'use strict'
-
 /* global describe it */
-const Store = require('../lib/credential-store')
+
+import {* as Store} from '../lib/credential-store' 
 
 describe('the credential store', () => {
   describe('WHEN file does not exist', () => {
@@ -9,6 +8,8 @@ describe('the credential store', () => {
       let store = new Store({
         
       })
+
+      store.set('/dev/marketing/pg_admin', '')
     })
   })
 })

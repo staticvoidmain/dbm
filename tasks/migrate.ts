@@ -22,10 +22,11 @@ export interface MigrationDocument {
 
 enum RunnerState {
   none,
-  started,
+  running,
   paused,
   error,
   terminated,
+  complete,
   stopping,
   stopped
 }
@@ -51,8 +52,6 @@ class MigrationRunner extends EventEmitter {
   state: RunnerState
 
   constructor(doc: MigrationDocument, env: any) {
-    // stole this from a tutorial, but I kinda like it.
-    // saves you if you forget the new keyword.
     super()
 
     assert(doc, 'Must supply a valid document')
@@ -119,11 +118,11 @@ class MigrationRunner extends EventEmitter {
   }
 
   start() {
-    if (this.state != RunnerState.started) {
+    if (this.state == RunnerState.none) {
+      this.state = RunnerState.running
       this.log('Migration Started: ' + this.name)
       this.log('Details: ' + JSON.stringify(this.env))
       this.next()
-      this.started = true
     }
   }
 
@@ -143,7 +142,6 @@ class MigrationRunner extends EventEmitter {
 
     let step = this.steps[this.stepIndex]
 
-    // I guess this should just be runStep
     this.state = RunnerState.running
     this.emit('step', step)
 
@@ -159,7 +157,7 @@ class MigrationRunner extends EventEmitter {
       this.log('ERROR: step.as is not implemented yet.')
     }
 
-    this.db.run(query).then(function (result) {
+    this.db.run(query).then((result) => {
       this.log('Step Completed')
 
       if (result.rowCount) {
@@ -167,18 +165,18 @@ class MigrationRunner extends EventEmitter {
       }
 
       step.status = stepStatus.complete
-      self.emit('step', step)
-      self.stepIndex++
-      self.next()
+      this.emit('step', step)
+      this.stepIndex++
+      this.next()
     }).catch(function (err) {
-      step.status = stepStatus.failed
-      self.emit('step', step)
-      self.emit('error', err)
+      this.status = stepStatus.failed
+      this.emit('step', step)
+      this.emit('error', err)
     })
   }
 
   retry() {
-    this.paused = false
+    this.state = RunnerState.running;
     this.next()
   }
 
@@ -190,10 +188,11 @@ class MigrationRunner extends EventEmitter {
   }
 
   stop() {
-    this.state = 'stop'
+    this.state = RunnerState.stopped
     while (this.stepIndex < this.stepCount) {
       let step = this.steps[this.stepIndex]
-      step.status = 'canceled'
+      step.status = stepStatus.canceled
+
       this.emit('step', step)
       this.stepIndex++
     }
@@ -201,7 +200,6 @@ class MigrationRunner extends EventEmitter {
 
   pause() {
     this.state = RunnerState.paused
-    // todo: implement pause.. later....
   }
 
   validate() {

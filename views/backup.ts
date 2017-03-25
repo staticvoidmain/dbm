@@ -1,8 +1,7 @@
-'use strict'
 
-const blessed = require('blessed')
-const BackupRunner = require('../tasks/backup.js')
-const factory = require('../lib/database.js')
+import * as blessed from 'blessed'
+import '../tasks/backup.js'
+import '../lib/database.js'
 
 // todo: check the terminal settings maybe?
 // to make sure they actually see this.
