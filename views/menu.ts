@@ -1,6 +1,6 @@
 'use strict'
 
-const blessed = require('blessed')
+import * as blessed from 'blessed'
 const backupView = require('./backup.js')
 const config = require('./config.js')
 const selectMigration = require('./selectMigration.js')

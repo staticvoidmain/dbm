@@ -1,5 +1,5 @@
 import * as blessed from 'blessed'
-import * as menu from './views/menu'
+import * as menu from './menu'
 
 const app = {
   // todo: these are just temp settings

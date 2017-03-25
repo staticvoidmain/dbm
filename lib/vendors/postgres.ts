@@ -2,18 +2,17 @@
 
 import * as pg from 'pg'
 import * as sqlgen from 'sql'
-import * as EventEmitter from 'events'
 import { inherits } from 'util'
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
-export class PostgresDb extends EventEmitter {
+// was I using EventEmitter to fire off log messages?
+export class PostgresDb {
   config: any;
   separator: string;
   name: string;
 
   constructor(db: any) {
-    super()
 
     this.config = {
       host: db.host,

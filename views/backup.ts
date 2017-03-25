@@ -29,10 +29,10 @@ module.exports = {
       keys: true,
       width: '70%',
       height: '70%',
-      border: {
-        fg: 'cyan',
-        type: 'line'
-      },
+      // border: {
+      //   fg: 'cyan',
+      //   type: 'line'
+      // },
       style: app.styles.listtable
     })
 

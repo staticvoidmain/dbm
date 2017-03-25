@@ -1,23 +1,27 @@
 const sqlite = require('sqlite3')
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
-function SqliteDb (options) {
-  this.db = new sqlite.Database(options.host)
+export class SqliteDb {
+  db: any
+  separator: string
+  name: string
 
-  this.separator = ';' + newline
-  this.name = 'sqlite3'
-}
+  constructor(options) {
+    this.db = new sqlite.Database(options.host)
 
-SqliteDb.prototype.run = function (statement) {
-  let self = this
-  return new Promise(function (resolve, reject) {
-    self.db.run(statement, {}, function (err) {
-      if (err) return reject(err)
+    this.separator = ';' + newline
+    this.name = 'sqlite3'
+  }
 
-      // this gets us the N rows affected
-      return resolve(this.changes)
+  run (statement) {
+    let self = this
+    return new Promise(function (resolve, reject) {
+      self.db.run(statement, {}, function (err) {
+        if (err) return reject(err)
+
+        // this gets us the N rows affected
+        return resolve(this.changes)
+      })
     })
-  })
+  } 
 }
-
-module.exports = SqliteDb

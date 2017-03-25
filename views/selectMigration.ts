@@ -1,5 +1,5 @@
 'use strict'
-const blessed = require('blessed')
+import * as blessed from 'blessed'
 
 const fs = require('fs')
 const path = require('path')

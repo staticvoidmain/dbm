@@ -2,7 +2,7 @@
 
   This screen handles some stuff.
 */
-const blessed = require('blessed')
+import * as blessed from 'blessed'
 const MigrationRunner = require('../tasks/migrate.js')
 
 const statusToColorMap = {

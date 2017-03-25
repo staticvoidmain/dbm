@@ -1,7 +1,3 @@
-'use strict'
-
-/* global process assert */
-
 import { join } from 'path'
 import {
   readFileSync,
@@ -17,20 +13,39 @@ import { ok } from 'assert'
 import { Readable } from 'stream'
 
 const algorithm = 'aes256'
+const fileName = '.dbm-creds'
+const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
+// wraps text in a readable stream.
 function wrap(text) {
-  // wraps text in a readable stream.
-  var s: any = new Readable();
-  s._read = function noop() { };
-  s.push(text);
-  s.push(null);
+  var s: any = new Readable()
+  s._read = function noop() { }
+  // however there MAY be a case where this fucks up
+  // if the string is too long. how big are the chunks supposed to be?
+  s.push(text)
+  s.push(null)
 
   return s
 }
 
-function validateRequest(req) {
-  ok(req.path, 'env is required')
-  ok(req.phrase, 'passphrase is required')
+/**
+ * 
+ * @param stream a ReadableStream
+ */
+function read(stream): Promise<string> {
+
+  return new Promise(function (resolve, reject) {
+    let content = ""
+
+    stream.on('data', (chunk) => {
+      content += chunk;
+    })
+
+    stream.on('error', (e) => reject(e))
+    stream.on('end', () => {
+      resolve(content);
+    })
+  })
 }
 
 function encrypt(text, password) {
@@ -45,16 +60,26 @@ function decipher(stream, password) {
   return stream.pipe(decipher)
 }
 
-class CredentialStore {
+export interface CredentialItem {
+  environment: string
+  server: string
+  database: string
+  user: string
+  password: string
+}
 
-  new: boolean
-  path: string
+export class CredentialStore {
+  private credentials: Map<string, CredentialItem>
 
-  constructor(config) {
-    if (!config) {
-      throw new Error('Config not specified!')
-    }
+  private isOpen: boolean
+  private encrypted: boolean
+  private new: boolean
+  private path: string
 
+  /**
+   * TODO: Should this guy take arguments?
+   */
+  constructor() {
     this.new = false
 
     let locations = [
@@ -72,7 +97,7 @@ class CredentialStore {
       if (element) {
         valid.push(element)
 
-        let store = join(element, '.dbm-creds')
+        let store = join(element, fileName)
         if (existsSync(store)) {
           this.path = store;
           break
@@ -85,10 +110,76 @@ class CredentialStore {
       this.new = true
 
       let location = valid[0]
-      this.path = join(location, '.dbm-creds')
+      this.path = join(location, fileName)
 
       writeFileSync(this.path, '')
     }
+  }
+
+  open(phrase) {
+    ok(phrase, 'passphrase is required')
+
+    let stream = createReadStream(this.path, 'utf8')
+    let source = this.encrypted
+      ? decipher(stream, phrase)
+      : stream
+
+    return read(source)
+      .then((text) => {
+
+        // todo: how do we know we've successfully decyphered it?
+        let lines = text.split(newline)
+
+        if (lines.length > 0) {
+          for (var i = 0; i < lines.length; i++) {
+            let line = lines[i];
+            let [path, password] = line.split(' ')
+            let [env, server, db, user] = path.split('/')
+
+            this.credentials.set(path, {
+              environment: env,
+              server: server,
+              database: db,
+              user: user,
+              password: password
+            })
+          }
+        }
+      })
+  }
+
+  // this actually allows the passphrase to be updated once the file has been opened
+  // so that's a nice benefit.
+  close(phrase?: string) {
+    ok(this.isOpen, "Credential store not open!")
+
+    return new Promise((resolve, reject) => {
+      let output = createWriteStream(this.path, 'utf8')
+
+      output.on('error', () => { reject() })
+      output.on('finish', () => { resolve() })
+
+      let lines = []
+      this.credentials.forEach(function (item) {
+        let path = [
+          item.environment,
+          item.server,
+          item.database,
+          item.user
+        ].join('/')
+
+        lines.push(path + " " + item.password)
+      })
+
+      let text = lines.join(newline)
+
+      if (this.encrypted) {
+        encrypt(text, phrase).pipe(output)
+      }
+      else {
+        wrap(text).pipe(output)
+      }
+    })
   }
 
   /**
@@ -96,33 +187,24 @@ class CredentialStore {
    * This value should be transparently passed to the server connection when connecting to that db.
    * @param {Object} req the credential request object
    */
-  get(req, cb) {
-    validateRequest(req)
-    let stream = createReadStream(this.path, 'utf8')
-    let text = decipher(stream, req.phrase).read()
-    let lines = text.split('\n')
+  get(path) {
+    ok(this.isOpen, "Credential store not open!")
 
-    for (var i = 0; i < lines.length; i++) {
-      let line: string = lines[i];
-      if (line.indexOf(req.path) === 0) {
-        return line.substring(line.indexOf('=') + 1)
-      }
-    }
-
-    return null
+    return this.credentials.get(path)
   }
 
-  set(req) {
-    validateRequest(req)
-    let path = req.path
-    let password = req.password
-    let line = `$path=$password`
+  /**
+   * SETS the password to something
+   */
+  set(path, password) {
 
-    let stream = createReadStream(this.path, 'utf8')
-    let clearText = decipher(stream, req.phrase)
-    let newText = clearText + '\n' + line
-    let output = createWriteStream(this.path)
+    ok(this.isOpen, "Credential store not open!")
+    ok(path.indexOf(' ') === -1, "path cannot contain spaces")
+    ok(password.indexOf(' ') === -1, "password cannot contain spaces")
 
-    encrypt(newText, req.phrase).pipe(output)
+    this.credentials[path] = {
+      path: path,
+      password: password
+    }
   }
 }

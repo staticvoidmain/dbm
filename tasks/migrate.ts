@@ -1,11 +1,14 @@
-const sql = require('sql')
 
+import * as sql from 'sql'
 import { EventEmitter } from 'events'
-
-const factory = require('../lib/database.js')
-const path = require('path')
-const assert = require('assert')
-import {Step, stepStatus, create as stepFactory} from './migration/steps'
+import { create } from '../lib/database'
+import { join, dirname } from 'path'
+import { ok } from 'assert'
+import { 
+  Step, 
+  stepStatus, 
+  create as stepFactory 
+} from './migration/steps'
 
 export interface MigrationDocument {
   name: string
@@ -36,7 +39,7 @@ enum RunnerState {
  * @param {Object} doc the document describing the migration
  * @param {Object} env the 'environment' to use along with the passwords for each.
  */
-class MigrationRunner extends EventEmitter {
+export class MigrationRunner extends EventEmitter {
 
   // todo: less 'any' abuse
   root: string
@@ -47,18 +50,18 @@ class MigrationRunner extends EventEmitter {
   activeStep: any
   stepIndex: number
   stepCount: number
-  steps: Array<Step> 
+  steps: Array<Step>
   transactions: Array<string>
   state: RunnerState
 
   constructor(doc: MigrationDocument, env: any) {
     super()
 
-    assert(doc, 'Must supply a valid document')
-    assert(env, 'Must supply a valid environment config')
+    ok(doc, 'Must supply a valid document')
+    ok(env, 'Must supply a valid environment config')
 
     this.name = doc.name
-    this.root = path.dirname(doc.path)
+    this.root = dirname(doc.path)
     this.sqlgen = sql.create(env.vendor, {})
     this.activeStep = null
     this.stepIndex = 0
@@ -69,7 +72,7 @@ class MigrationRunner extends EventEmitter {
     // lazy create them?
     // we might need multiple connections of different types
     // in the worst case scenario...
-    this.db = factory.create(env.vendor, env)
+    this.db = create(env.vendor, env)
   }
 
   // options is just the doc, right?
@@ -127,7 +130,7 @@ class MigrationRunner extends EventEmitter {
   }
 
   next() {
-    if (this.state == RunnerState.paused 
+    if (this.state == RunnerState.paused
       || this.state == RunnerState.terminated) {
       return
     }
@@ -217,5 +220,4 @@ class MigrationRunner extends EventEmitter {
 
     // todo: ensure create has drop
   }
-
 }

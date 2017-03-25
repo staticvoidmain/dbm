@@ -6,8 +6,8 @@
   TODO: read the eslint source for inspiration.
  */
 
-const Parser = require('../lib/parser.js')
-const syntax = require('../lib/syntax.js')
+import {Parser} from '../lib/parser'
+import {syntax} from '../lib/syntax'
 
 // note: these are going to likely be platform specific.
 // also, I'm totally making these names up as I go.
@@ -95,24 +95,28 @@ function evaluate (rule, statement, lintResult) {
   return
 }
 
-function Linter (options) {
-  this.rules = Object.assign(rules, options)
-}
+export class Linter {
+  rules: any;
 
-Linter.prototype.lint = function (script) {
-  var parser = new Parser()
-  var statements = parser.parse(script)
-  var result = []
+  constructor(options) {
+    this.rules = Object.assign(rules, options)
 
-  statements.forEach(function (statement) {
-    this.rules.forEach(function (enabled, rule) {
-      if (enabled) {
-        evaluate(rule, statement, result)
-      }
+  }
+  
+  lint (script) {
+    var parser = new Parser({})
+    var statements = parser.parse(script)
+    var result = []
+
+    statements.forEach(function (statement) {
+      this.rules.forEach(function (enabled, rule) {
+        if (enabled) {
+          evaluate(rule, statement, result)
+        }
+      })
     })
-  })
 
-  return result
+    return result
+  }
 }
 
-module.exports = Linter

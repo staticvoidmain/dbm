@@ -58,13 +58,19 @@ class Scanner {
 
 export class Parser {
   options: any;
+  state: any;
+
   constructor(options) {
     this.options = options
   }
 
   visit(scanner) {
-    while (true) {
-      // do stuff.
+
+    let statements = []
+
+    // todo: this isn't strictly right.
+    while (scanner.pos < scanner.len) {
+      
       switch (scanner.token) {
         case ' ':
         case '\t':
@@ -72,10 +78,12 @@ export class Parser {
           break
       }
     }
+
+    return statements
   }
 
   scan(script) {
-    // todo: options????
+    // todo: options what was my plan here?
     return new Scanner(script, {
 
     })
@@ -88,5 +96,3 @@ export class Parser {
     return statements
   }
 };
-
-
