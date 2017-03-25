@@ -2,10 +2,11 @@
     "compilerOptions": {
         "module": "commonjs",
         "noImplicitAny": false,
+        "target": "es2015",
         "removeComments": true,
         "preserveConstEnums": true,
-        "outFile": "dbm.js",
-        "sourceMap": true
+        "sourceMap": true,
+        "types" : [ "node", "core-js" ]
     },
     "typeRoots": [ "node_modules/@types" ],
     "include": [

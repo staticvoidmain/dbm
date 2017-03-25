@@ -1,77 +1,92 @@
-'use strict'
-
 // okay, let's keep this on hold for a bit.
 // I may have opened myself up to some annoying complications by supporting
 // code generation for multiple platforms...
-const syntax = require('./syntax')
+import * as syntax from './syntax'
+
+const space = ' '.charCodeAt(0)
+const tab = '\t'.charCodeAt(0)
+const newline = '\n'.charCodeAt(0)
+
 /**
  * heavily inspired by the typescript compiler's scanner/lexer
  * @param {Object} options
  */
-function Scanner (text, options) {
-  this.options = options
-  this.text = text
-  this.pos = 0
-  this.len = text.length
-}
+class Scanner {
+  options: any;
+  text: string;
+  pos: number;
+  len: number;
 
-const space = ' '.charCodeAt(0)
-const tab = '\t'.charCodeAt(0)
-
-Scanner.prototype.whitespace = function () {
-  let token = this.text[this.pos]
-  while (token === space || token === tab) {
-    token = this.text[++this.pos]
+  constructor(text, options) {
+    this.options = options
+    this.text = text
+    this.pos = 0
+    this.len = text.length
   }
-}
 
-Scanner.prototype.scanInlineComment = function () {
-  let start = this.pos
-  var ch = -1
-  // doesn't count as a statement. might not even emit it.
-  while (this.pos < this.len) {
-    ch = this.text.charCodeAt(this.pos)
+  whitespace() {
+    let token = this.text.charCodeAt(this.pos)
+    while (token === space || token === tab) {
+      this.pos++;
 
-    if (ch === syntax.newline) {
-      return this.text.substring(start, this.pos)
+      token = this.text.charCodeAt(this.pos)
+    }
+  }
+
+  // starting at pos, returns the string, not that it matters.
+  scanString() {
+    return 'TODO'
+  }
+
+  scanInlineComment() {
+    let start = this.pos
+    var ch = -1
+    // doesn't count as a statement. might not even emit it.
+    while (this.pos < this.len) {
+      ch = this.text.charCodeAt(this.pos)
+
+      if (ch === newline) {
+        return this.text.substring(start, this.pos)
+      }
+
+      this.pos++
     }
 
-    this.pos++
+    return ''
+  }
+}
+
+export class Parser {
+  options: any;
+  constructor(options) {
+    this.options = options
   }
 
-  return ''
-}
+  visit(scanner) {
+    while (true) {
+      // do stuff.
+      switch (scanner.token) {
+        case ' ':
+        case '\t':
+          scanner.whitespace()
+          break
+      }
+    }
+  }
 
-// starting at pos, returns the string, not that it matters.
-Scanner.prototype.scanString = function () {
-  return 'TODO'
-}
+  scan(script) {
+    // todo: options????
+    return new Scanner(script, {
 
-function scan (script) {
-  return new Scanner(script)
-}
+    })
+  }
 
-function Parser (options) {
-  this._options = options
+  parse(script) {
+    let scanner = this.scan(script)
+    let statements = this.visit(scanner)
+
+    return statements
+  }
 };
 
-function visit (scanner) {
-  while (true) {
-    // do stuff.
-    switch (scanner.token) {
-      case ' ':
-      case '\t':
-        scanner.whitespace()
-        break
-    }
-  }
-}
 
-Parser.prototype.parse = function (script) {
-  let scanner = scan(script)
-  let statements = visit(scanner)
-
-  return statements
-}
-
-module.exports = Parser

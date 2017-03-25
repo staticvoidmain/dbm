@@ -1,10 +1,7 @@
+import * as blessed from 'blessed'
+import * as menu from './views/menu'
 
-'use strict'
-
-const blessed = require('blessed')
-const menu = require('./views/menu.js')
-
-var app = {
+const app = {
   // todo: these are just temp settings
   env: {
     vendor: 'postgres',

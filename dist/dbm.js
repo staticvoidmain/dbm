@@ -1,427 +1,12 @@
-'use strict';
-var _this = this;
-var fs = require('fs');
-var path = require('path');
-var crypto = require('crypto');
-var StringDecoder = require('string_decoder').StringDecoder;
-var algorithm = 'aes256';
-function CredentialStore(config) {
-    if (!config) {
-        throw new Error('Config not specified!');
-    }
-    this["new"] = false;
-    var locations = [
-        process.env.DBM_HOME,
-        process.env.HOME,
-        process.env.APPDATA,
-        process.cwd()
-    ];
-    var valid = [];
-    for (var i = 0; i < locations.length; i++) {
-        var element = locations[i];
-        if (element) {
-            valid.push(element);
-            var store = path.join(element, '.dbm-creds');
-            if (fs.existsSync(store)) {
-                this.file = fs.openSync(store, 'r+');
-                break;
-            }
-        }
-    }
-    if (!this.file) {
-        this["new"] = true;
-        var location_1 = valid[0];
-        var store = path.join(location_1, '.dbm-creds');
-        this.file = fs.openSync(store, 'w+');
-    }
-}
-function validateRequest(req) {
-    assert(req.env, 'env is required');
-    assert(req.server, 'server is required');
-    assert(req.db, 'db is required');
-    assert(req.user, 'user name is required');
-    assert(req.phrase, 'passphrase is required');
-}
-function encrypt(text, password) {
-    var cipher = crypto.createCipher(algorithm, password);
-    return wrap(text).pipe(cipher);
-}
-function decipher(stream, password) {
-    var decipher = crypto.createDecipher(algorithm, password);
-    return stream.pipe(decipher);
-}
-CredentialStore.prototype.get = function (req, cb) {
-    validateRequest(req);
-    var stream = fs.createReadStream(this.file, 'utf8');
-    var text = decipher(stream, req.phrase);
-};
-CredentialStore.prototype.set = function (req) {
-    validateRequest(req);
-    var env = req.env;
-    var srv = req.srv;
-    var db = req.db;
-    var user = req.user;
-    var path = "$env/$srv/$db/$user";
-    var clearText = decrypt();
-    var output = fs.createWriteStream(_this.file);
-    encrypt(newText).pipe(output);
-};
-'use strict';
-module.exports = {
-    create: function (vendor, options) {
-        var Db = require('./vendors/' + vendor);
-        return new Db(options);
-    }
-};
-'use strict';
-var syntax = require('./syntax');
-function Scanner(text, options) {
-    this.options = options;
-    this.text = text;
-    this.pos = 0;
-    this.len = text.length;
-}
-var space = ' '.charCodeAt(0);
-var tab = '\t'.charCodeAt(0);
-Scanner.prototype.whitespace = function () {
-    var token = this.text[this.pos];
-    while (token === space || token === tab) {
-        token = this.text[++this.pos];
-    }
-};
-Scanner.prototype.scanInlineComment = function () {
-    var start = this.pos;
-    var ch = -1;
-    while (this.pos < this.len) {
-        ch = this.text.charCodeAt(this.pos);
-        if (ch === syntax.newline) {
-            return this.text.substring(start, this.pos);
-        }
-        this.pos++;
-    }
-    return '';
-};
-Scanner.prototype.scanString = function () {
-    return 'TODO';
-};
-function scan(script) {
-    return new Scanner(script);
-}
-function Parser(options) {
-    this._options = options;
-}
-;
-function visit(scanner) {
-    while (true) {
-        switch (scanner.token) {
-            case ' ':
-            case '\t':
-                scanner.whitespace();
-                break;
-        }
-    }
-}
-Parser.prototype.parse = function (script) {
-    var scanner = scan(script);
-    var statements = visit(scanner);
-    return statements;
-};
-module.exports = Parser;
-var inlineComment = '--';
-var blockCommentStart = '/*';
-var blockCommentEnd = '*/';
-var syntax = {
-    whitespace: 0,
-    keyword: 1,
-    semicolon: 2,
-    lineComment: 3,
-    blockComment: 4
-};
-module.exports = {
-    token: {},
-    statement: {
-        select: 1,
-        insert: 2,
-        create: 3,
-        update: 4,
-        "delete": 6,
-        truncate: 7,
-        drop: 8,
-        alter: 9,
-        declare: 10,
-        use: 11,
-        set: 12,
-        begin_transaction: 13
-    }
-};
-'use strict';
-var mssql = require('mssql');
-var sqlgen = require('sql');
-var newline = (process.platform === 'win32' ? '\r\n' : '\n');
-var columns = sqlgen.define({
-    name: 'columns',
-    schema: 'information_schema',
-    columns: [
-        { name: 'table_schema', property: 'tableSchema' },
-        { name: 'table_name', property: 'tableName' },
-        { name: 'table_catalog', property: 'tableCatalog' },
-        { name: 'column_name', property: 'name' },
-        { name: 'ordinal_position', property: 'ordinalPosition' },
-        { name: 'data_type', property: 'type' },
-        { name: 'character_maximum_length', property: 'charLength' },
-        { name: 'column_default', property: 'defaultValue' },
-        { name: 'is_nullable', property: 'isNullable' }
-    ]
-});
-var tables = sqlgen.define({
-    name: 'tables',
-    schema: 'information_schema',
-    columns: [
-        { name: 'table_name', property: 'name' },
-        { name: 'table_schema', property: 'schema' },
-        { name: 'table_catalog', property: 'catalog' },
-        { name: 'table_type', property: 'type' }
-    ]
-});
-function MicrosoftSql(database) {
-    if (!(this instanceof MicrosoftSql)) {
-        return new MicrosoftSql(database);
-    }
-    this.connect = function () {
-        var connection = new mssql.Connection({
-            user: database.user,
-            password: database.password,
-            server: database.host,
-            database: database.name
-        });
-        return connection.connect();
-    };
-    this.name = 'mssql';
-    this.separator = newline + 'go;' + newline;
-}
-function getAllColumns(result) {
-    return function (connection) {
-        var req = new mssql.Request(connection);
-        var query = columns.select().toQuery().text;
-        return req.query(query)
-            .then(function (res) {
-            result.tables = res[0];
-        });
-    };
-}
-function getAllTables(result) {
-    return function (connection) {
-        var req = new mssql.Request(connection);
-        var getAllTables = tables.select().toQuery().text;
-        return req.query(getAllTables)
-            .then(function (res) {
-            result.columns = res[0];
-        });
-    };
-}
-function mergeResults(result) {
-    return function () {
-        var tableLookup = {};
-        for (var tableIndex = 0; tableIndex < result.tables.length; tableIndex++) {
-            var table = result.tables[tableIndex];
-            var key = table.schema + '.' + table.name;
-            tableLookup[key] = table;
-            table.columns = [];
-        }
-        for (var columnIndex = 0; columnIndex < result.columns.length; columnIndex++) {
-            var column = result.columns[columnIndex];
-            var key = column.tableSchema + '.' + column.tableName;
-            var table = tableLookup[key];
-            if (table) {
-                table.columns.push(column);
-            }
-        }
-        result.columns = null;
-        return result;
-    };
-}
-MicrosoftSql.prototype.getSchema = function () {
-    var result = {};
-    return this.connect()
-        .then(getAllTables(result))
-        .then(getAllColumns(result))
-        .then(mergeResults(result));
-};
-MicrosoftSql.prototype.run = function (query) {
-    return this.connect()
-        .then(function (connection) {
-        var req = new mssql.Request(connection);
-        return req.query(query)
-            .then(function (res) {
-            return res[0];
-        });
-    });
-};
-MicrosoftSql.prototype.getProcedures = function () {
-};
-module.exports = MicrosoftSql;
-'use strict';
-var pg = require('pg');
-var sqlgen = require('sql');
-var EventEmitter = require('events');
-var inherits = require('util').inherits;
-var newline = (process.platform === 'win32' ? '\r\n' : '\n');
-function PostgresDb(db) {
-    this.config = {
-        host: db.host,
-        database: db.name,
-        user: db.user,
-        password: db.password,
-        port: 5432,
-        max: 10,
-        idleTimeoutMillis: 30000
-    };
-    this.separator = ';' + newline;
-    this.name = 'postgres';
-}
-inherits(PostgresDb, EventEmitter);
-var columns = sqlgen.define({
-    name: 'columns',
-    schema: 'information_schema',
-    columns: [
-        { name: 'table_schema', property: 'tableSchema' },
-        { name: 'table_name', property: 'tableName' },
-        { name: 'table_catalog', property: 'tableCatalog' },
-        { name: 'column_name', property: 'name' },
-        { name: 'ordinal_position', property: 'ordinalPosition' },
-        { name: 'data_type', property: 'type' },
-        { name: 'character_maximum_length', property: 'charLength' },
-        { name: 'column_default', property: 'defaultValue' },
-        { name: 'is_nullable', property: 'isNullable' }
-    ]
-});
-var fetchAllKeys = "\nSELECT\n  pg_namespace.nspname as tableSchema,\n  pg_class.relname as tableName,\n  pg_attribute.attname as keyType,\n  indisprimary as isPrimaryKey\nFROM pg_index, pg_class, pg_attribute, pg_namespace \nWHERE\n  pg_namespace.nspname not like 'pg_%' AND\n  pg_namespace.nspname <> 'information_schema' AND\n  pg_class.relnamespace = pg_namespace.oid AND \n  pg_attribute.attrelid = pg_class.oid AND \n  pg_attribute.attnum = any(pg_index.indkey) AND\n  indrelid = pg_class.oid;\n";
-var tables = sqlgen.define({
-    name: 'tables',
-    schema: 'information_schema',
-    columns: [
-        { name: 'table_name', property: 'name' },
-        { name: 'table_schema', property: 'schema' },
-        { name: 'table_catalog', property: 'catalog' },
-        { name: 'table_type', property: 'type' }
-    ]
-});
-var allColumnsQuery = columns
-    .select(columns.star())
-    .from(columns)
-    .where(columns.tableSchema.notLike('pg_%')
-    .and(columns.tableSchema.notEqual('information_schema')))
-    .toQuery();
-var userTablesQuery = tables
-    .select(tables.star())
-    .from(tables)
-    .where(tables.schema.notLike('pg_%')
-    .and(tables.schema.notEqual('information_schema')))
-    .toQuery();
-function mergeResults(values) {
-    var tables = values[0];
-    var columns = values[1];
-    var tableLookup = {};
-    for (var tableIndex = 0; tableIndex < tables.length; tableIndex++) {
-        var table = tables[tableIndex];
-        var key = table.schema + '.' + table.name;
-        tableLookup[key] = table;
-        table.columns = [];
-    }
-    for (var columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-        var column = columns[columnIndex];
-        var key = column.tableSchema + '.' + column.tableName;
-        var table = tableLookup[key];
-        if (table) {
-            table.columns.push(column);
-        }
-    }
-    return {
-        tables: tables
-    };
-}
-var varchar = 'character varying';
-var char = 'character';
-function coerceColumnTypes(columns) {
-    for (var i = 0; i < columns.length; i++) {
-        var col = columns[i];
-        switch (col.type) {
-            case varchar:
-                col.type = 'varchar';
-                break;
-            case char:
-                col.type = 'char';
-                break;
-            default:
-                break;
-        }
-    }
-    return columns;
-}
-PostgresDb.prototype.run = function (statement, args) {
-    if (typeof statement !== 'string') {
-        throw new Error('Only strings can be passed to run!');
-    }
-    return pg.connect(this.config)
-        .then(function (client) {
-        return client.query(statement, args)
-            .then(function (res) {
-            client.end();
-            return res;
-        });
-    });
-};
-PostgresDb.prototype.getSchema = function () {
-    return Promise.all([
-        this.getAllTables(),
-        this.getAllColumns(),
-        this.getKeys()
-    ]).then(mergeResults);
-};
-PostgresDb.prototype.getAllColumns = function () {
-    return pg.connect(this.config)
-        .then(function (client) {
-        var text = allColumnsQuery.text;
-        var args = allColumnsQuery.values;
-        return client.query(text, args)
-            .then(function (res) {
-            client.end();
-            return coerceColumnTypes(res.rows.slice());
-        });
-    });
-};
-PostgresDb.prototype.getKeys = function () {
-    return pg.connect(this.config)
-        .then(function (client) {
-        return client.query(fetchAllKeys, [])
-            .then(function (res) {
-            client.end();
-            return res.rows.slice();
-        });
-    });
-};
-PostgresDb.prototype.getAllTables = function () {
-    return pg.connect(this.config)
-        .then(function (client) {
-        var text = userTablesQuery.text;
-        var args = userTablesQuery.values;
-        return client.query(text, args)
-            .then(function (res) {
-            client.end();
-            return res.rows.slice();
-        });
-    });
-};
-module.exports = PostgresDb;
-var sqlite = require('sqlite3');
-var newline = (process.platform === 'win32' ? '\r\n' : '\n');
+const sqlite = require('sqlite3');
+const newline = (process.platform === 'win32' ? '\r\n' : '\n');
 function SqliteDb(options) {
     this.db = new sqlite.Database(options.host);
     this.separator = ';' + newline;
     this.name = 'sqlite3';
 }
 SqliteDb.prototype.run = function (statement) {
-    var self = this;
+    let self = this;
     return new Promise(function (resolve, reject) {
         self.db.run(statement, {}, function (err) {
             if (err)
@@ -431,60 +16,367 @@ SqliteDb.prototype.run = function (statement) {
     });
 };
 module.exports = SqliteDb;
-'use strict';
-var inherits = require('util').inherits;
-var EventEmitter = require('events');
-var factory = require('../lib/database');
-var sql = require('sql');
-var fs = require('fs');
-var path = require('path');
-function BackupRunner(options) {
-    this.sqlgen = sql.create(options.vendor, {});
-    this.db = factory.create(options.vendor, options);
-}
-inherits(BackupRunner, EventEmitter);
-BackupRunner.prototype.run = function (schema, options) {
-    var self = this;
-    if (!schema) {
-        throw Error('I need a schema fool');
-    }
-    options = options || {};
-    var backupName = options.backupName || 'backup.sql';
-    var backupPath = options.backupPath;
-    var sqlgen = self.sqlgen;
-    if (!options.scriptPerObject) {
-        var filePath = path.join(backupPath, backupName);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
-    }
-    if (schema.tables) {
-        schema.tables.forEach(function (table) {
-            var tableGenerator = sqlgen.define({
-                name: table.name,
-                schema: table.schema,
-                columns: []
-            });
-            table.columns.forEach(function (col) {
-                tableGenerator.addColumn({
-                    name: col.name,
-                    precision: col.precision,
-                    dataType: col.type,
-                    defaultValue: col.defaultValue,
-                    notNull: !col.isNullable
-                });
-            });
-            var q = tableGenerator.create();
-            if (options.safe) {
-                q = q.ifNotExists();
-            }
-            if (options.scriptPerObject) {
-                backupName = table.schema + '.' + table.name + '.sql';
-            }
-            var text = q.toQuery().text + self.db.separator;
-            fs.appendFileSync(path.join(backupPath, backupName), text, 'utf8');
-            self.emit('done');
-        });
+module.exports = {
+    show: (app) => {
     }
 };
-module.exports = BackupRunner;
+const blessed = require('blessed');
+const main = require('./menu.js');
+module.exports = {
+    show: function (app) {
+        var screen = app.screen();
+        var menu = blessed.form({
+            parent: screen,
+            label: 'login',
+            left: 'center',
+            top: 'center',
+            keys: true,
+            border: 'line',
+            width: '50%',
+            height: '50%'
+        });
+        blessed.text({
+            left: 6,
+            top: 4,
+            width: 'half',
+            parent: menu,
+            tags: true,
+            style: { fg: 'white' },
+            content: '{bold}User Name:{/bold}'
+        });
+        var user = blessed.textbox({
+            parent: menu,
+            height: 1,
+            name: 'username',
+            style: { bg: 'white', fg: 'black' },
+            width: 'half',
+            left: 5,
+            top: 5
+        });
+        blessed.text({
+            left: 6,
+            top: 6,
+            tags: true,
+            width: 'half',
+            parent: menu,
+            style: { fg: 'white' },
+            content: '{bold}Password:{/bold}'
+        });
+        var password = blessed.textbox({
+            parent: menu,
+            height: 1,
+            censor: true,
+            width: 'half',
+            left: 5,
+            top: 7,
+            style: { bg: 'white', fg: 'black' },
+            name: 'password'
+        });
+        user.on('focus', function () { user.readInput(); });
+        password.on('focus', function () { password.readInput(); });
+        var submit = blessed.button({
+            parent: menu,
+            mouse: true,
+            keys: true,
+            shrink: true,
+            padding: {
+                left: 2,
+                right: 2
+            },
+            left: 2,
+            bottom: 0,
+            name: 'next_button',
+            content: '[ Login ]',
+            style: app.styles.button
+        });
+        let showMenu = function () {
+            main.show(app);
+            screen.destroy();
+        };
+        password.on('enter', showMenu);
+        submit.on('press', showMenu);
+        user.focus();
+        screen.render();
+    }
+};
+'use strict';
+const blessed = require('blessed');
+const backupView = require('./backup.js');
+const config = require('./config.js');
+const selectMigration = require('./selectMigration.js');
+module.exports = {
+    show: function (app) {
+        var screen = app.screen();
+        var menu = blessed.list({
+            parent: screen,
+            label: 'Tasks',
+            border: 'line',
+            style: {
+                selected: {
+                    bg: 'blue'
+                }
+            },
+            keys: true,
+            height: 'half',
+            width: 'half',
+            top: 5,
+            left: 5
+        });
+        menu.add('Backup:   export the schema and data to the file-system');
+        menu.add('Migrate:  run a set of scripts against the database to create/update or remove db objects');
+        menu.add('Analyze:  inspect your database for potential problems.');
+        menu.add('Optimize: automatically fix common database performance issues.');
+        menu.add('Config:   configure dbm');
+        menu.on('action', function (item, i) {
+            if (i === 0) {
+                backupView.show(app);
+            }
+            else if (i === 1) {
+                selectMigration.show(app);
+            }
+            else if (i === 2) {
+            }
+            else if (i === 3) {
+            }
+            else if (i === 4) {
+                config.show(app);
+            }
+            screen.destroy();
+        });
+        menu.focus();
+        screen.render();
+    }
+};
+const blessed = require('blessed');
+const MigrationRunner = require('../tasks/migrate.js');
+const statusToColorMap = {
+    'failed': 'red',
+    'complete': 'green',
+    'running': 'blue'
+};
+function formatStepString(step) {
+    let stepString = step.toString();
+    let color = statusToColorMap[step.status];
+    var start = '';
+    var end = '';
+    if (color) {
+        start = `{${color}-bg}`;
+        end = `{/${color}-bg}`;
+    }
+    return start + `${step.status} | ${stepString}` + end;
+}
+module.exports = {
+    show: function (app, doc) {
+        var screen = app.screen({
+            width: '95%',
+            height: '95%',
+            border: 'line'
+        });
+        var logger = blessed.log({
+            parent: screen,
+            width: '50%+1',
+            height: '100%',
+            left: '50%-1',
+            top: 0,
+            border: 'line',
+            tags: true,
+            keys: true,
+            mouse: true,
+            scrollback: 100,
+            scrollbar: {
+                ch: ' ',
+                track: {
+                    bg: 'yellow'
+                },
+                style: {
+                    inverse: true
+                }
+            }
+        });
+        var log = function (message) {
+            let d = new Date();
+            let date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+            let time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds();
+            let ts = date + ' ' + time;
+            logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message);
+        };
+        var runner = new MigrationRunner(doc, app.env);
+        log('Loaded migration: ' + doc.path);
+        runner.on('log', log);
+        runner.on('error', function (err) {
+            log('{red-fg}' + err + '{/red-fg}');
+        });
+        runner.validate();
+        var steps = blessed.list({
+            label: 'steps',
+            parent: screen,
+            width: '50%',
+            height: '100%',
+            border: 'line',
+            tags: true,
+            left: 0,
+            top: 0,
+            items: runner.steps.map(formatStepString)
+        });
+        runner.on('step', function (step) {
+            let item = steps.items[step.i];
+            steps.setItem(item, formatStepString(step));
+            screen.render();
+        });
+        var bar = blessed.listbar({
+            parent: screen,
+            autoCommandKeys: true,
+            width: 'shrink',
+            height: 1,
+            style: app.listbarStyle,
+            heigth: 3,
+            left: 5,
+            bottom: 1,
+            commands: {
+                'start': function () { runner.start(); },
+                'retry': function () { runner.retry(); },
+                'skip': function () { runner.skip(); },
+                'pause': function () { runner.pause(); },
+                'stop': function () { runner.stop(); }
+            }
+        });
+        bar.focus();
+        screen.render();
+    }
+};
+'use strict';
+const blessed = require('blessed');
+const fs = require('fs');
+const path = require('path');
+const yaml = require('js-yaml');
+const migration = require('./migration.js');
+const emphasize = require('emphasize');
+function testFileExtension(file) {
+    let isJson = file.endsWith('.json');
+    let isYaml = file.endsWith('.yml') || file.endsWith('.yaml');
+    return {
+        isJson: isJson,
+        isYaml: isYaml
+    };
+}
+module.exports = {
+    show: function (app) {
+        var screen = app.screen();
+        var input = blessed.textbox({
+            parent: screen,
+            top: 2,
+            left: 0,
+            height: 'shrink',
+            width: '25%',
+            border: 'line',
+            label: 'Search: ',
+            hidden: true
+        });
+        var msg = blessed.message({
+            parent: screen,
+            border: 'line',
+            height: 'shrink',
+            width: 'half',
+            top: 'center',
+            left: 'center',
+            label: 'Info',
+            tags: true,
+            keys: true,
+            hidden: true
+        });
+        var fm = blessed.filemanager({
+            parent: screen,
+            border: 'line',
+            style: {
+                selected: {
+                    bg: 'blue'
+                }
+            },
+            height: '100%-5',
+            width: '50%-2',
+            top: 5,
+            left: 0,
+            label: ' {blue-fg}%path{/blue-fg}',
+            cwd: process.env.DBM_HOME,
+            vi: true,
+            keys: true,
+            scrollbar: {
+                bg: 'yellow',
+                ch: ' '
+            },
+            search: function (callback) {
+                input.show();
+                input.readInput(function (err, value) {
+                    input.hide();
+                    screen.restoreFocus();
+                    if (err)
+                        return;
+                    return callback(null, value);
+                });
+                screen.render();
+            }
+        });
+        var preview = blessed.scrollablebox({
+            parent: screen,
+            tags: true,
+            border: 'line',
+            top: 5,
+            left: '50%+1',
+            width: '50%-2',
+            height: '100%-5',
+            scrollbar: {
+                bg: 'yellow',
+                ch: ' '
+            },
+            content: ''
+        });
+        function onSelectedItemChange(item) {
+            let value = blessed.helpers.cleanTags(item.content);
+            let file = path.resolve(fm.cwd, value);
+            fs.stat(file, function (err, stat) {
+                if (err) {
+                    throw err;
+                }
+                if (!stat.isDirectory()) {
+                    let test = testFileExtension(value);
+                    if (test.isYaml || test.isJson) {
+                        let content = fs.readFileSync(file, 'utf8');
+                        let formatted = test.isYaml
+                            ? emphasize.highlight('yaml', content)
+                            : emphasize.highlight('json', content);
+                        preview.setLabel(value);
+                        preview.setContent(formatted.value);
+                        screen.render();
+                    }
+                }
+            });
+        }
+        fm.on('select item', onSelectedItemChange);
+        fm.key('backspace', () => fm.select(0));
+        fm.on('file', function (file) {
+            let doc = null;
+            let test = testFileExtension(file);
+            if (test.isYaml || test.isJson) {
+                let contents = fs.readFileSync(file);
+                try {
+                    if (test.isYaml) {
+                        doc = yaml.safeLoad(contents);
+                    }
+                    else {
+                        doc = JSON.parse(contents);
+                    }
+                    doc.path = file;
+                }
+                catch (ex) {
+                    msg.error(ex);
+                    return;
+                }
+                migration.show(app, doc);
+            }
+            screen.destroy();
+        });
+        fm.focus();
+        fm.refresh();
+        screen.render();
+    }
+};

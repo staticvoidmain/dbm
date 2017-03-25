@@ -1,27 +1,99 @@
 'use strict'
 
-const pg = require('pg')
-const sqlgen = require('sql')
-const EventEmitter = require('events')
-const inherits = require('util').inherits
+import * as pg from 'pg'
+import * as sqlgen from 'sql'
+import * as EventEmitter from 'events'
+import { inherits } from 'util'
+
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
-function PostgresDb (db) {
-  this.config = {
-    host: db.host,
-    database: db.name,
-    user: db.user,
-    password: db.password,
-    port: 5432,
-    max: 10,
-    idleTimeoutMillis: 30000
+export class PostgresDb extends EventEmitter {
+  config: any;
+  separator: string;
+  name: string;
+
+  constructor(db: any) {
+    super()
+
+    this.config = {
+      host: db.host,
+      database: db.name,
+      user: db.user,
+      password: db.password,
+      port: 5432,
+      max: 10,
+      idleTimeoutMillis: 30000
+    }
+
+    this.separator = ';' + newline
+    this.name = 'postgres'
   }
 
-  this.separator = ';' + newline
-  this.name = 'postgres'
-}
+  run(statement, args) {
+    if (typeof statement !== 'string') {
+      throw new Error('Only strings can be passed to run!')
+    }
 
-inherits(PostgresDb, EventEmitter)
+    return pg.connect(this.config)
+      .then(function (client) {
+        return client.query(statement, args)
+          .then(function (res) {
+            client.end()
+
+            return res
+          })
+      })
+  }
+
+  // useful when scripting a database
+  // this list will continue to grow
+  getSchema() {
+    return Promise.all([
+      this.getAllTables(),
+      this.getAllColumns(),
+      this.getKeys()
+    ]).then(mergeResults)
+  }
+
+  getAllColumns() {
+    return pg.connect(this.config)
+      .then(function (client) {
+        let text = allColumnsQuery.text
+        let args = allColumnsQuery.values
+
+        return client.query(text, args)
+          .then(function (res) {
+            client.end()
+            return coerceColumnTypes(res.rows.slice())
+          })
+      })
+  }
+
+  getKeys() {
+    return pg.connect(this.config)
+      .then(function (client) {
+        return client.query(fetchAllKeys, [])
+          .then(function (res) {
+            client.end()
+            return res.rows.slice()
+          })
+      })
+  }
+
+  getAllTables() {
+    return pg.connect(this.config)
+      .then(function (client) {
+        let text = userTablesQuery.text
+        let args = userTablesQuery.values
+
+        return client.query(text, args)
+          .then(function (res) {
+            client.end()
+            return res.rows.slice()
+          })
+      })
+  }
+}
 
 // TODO: information_schema.table_constraints
 
@@ -122,7 +194,7 @@ const allColumnsQuery = columns
   .select(columns.star())
   .from(columns)
   .where(
-    columns.tableSchema.notLike('pg_%')
+  columns.tableSchema.notLike('pg_%')
     .and(columns.tableSchema.notEqual('information_schema')))
   .toQuery()
 
@@ -130,11 +202,11 @@ const userTablesQuery = tables
   .select(tables.star())
   .from(tables)
   .where(
-    tables.schema.notLike('pg_%')
+  tables.schema.notLike('pg_%')
     .and(tables.schema.notEqual('information_schema')))
   .toQuery()
 
-function mergeResults (values) {
+function mergeResults(values) {
   let tables = values[0]
   let columns = values[1]
   let tableLookup = {}
@@ -166,7 +238,7 @@ const varchar = 'character varying'
 const char = 'character'
 
 // todo: there are probably more.
-function coerceColumnTypes (columns) {
+function coerceColumnTypes(columns) {
   for (let i = 0; i < columns.length; i++) {
     let col = columns[i]
 
@@ -185,69 +257,4 @@ function coerceColumnTypes (columns) {
   return columns
 }
 
-PostgresDb.prototype.run = function (statement, args) {
-  if (typeof statement !== 'string') {
-    throw new Error('Only strings can be passed to run!')
-  }
 
-  return pg.connect(this.config)
-    .then(function (client) {
-      return client.query(statement, args)
-        .then(function (res) {
-          client.end()
-
-          return res
-        })
-    })
-}
-
-// useful when scripting a database
-// this list will continue to grow
-PostgresDb.prototype.getSchema = function () {
-  return Promise.all([
-    this.getAllTables(),
-    this.getAllColumns(),
-    this.getKeys()
-  ]).then(mergeResults)
-}
-
-PostgresDb.prototype.getAllColumns = function () {
-  return pg.connect(this.config)
-    .then(function (client) {
-      let text = allColumnsQuery.text
-      let args = allColumnsQuery.values
-
-      return client.query(text, args)
-        .then(function (res) {
-          client.end()
-          return coerceColumnTypes(res.rows.slice())
-        })
-    })
-}
-
-PostgresDb.prototype.getKeys = function () {
-  return pg.connect(this.config)
-    .then(function (client) {
-      return client.query(fetchAllKeys, [])
-        .then(function (res) {
-          client.end()
-          return res.rows.slice()
-        })
-    })
-}
-
-PostgresDb.prototype.getAllTables = function () {
-  return pg.connect(this.config)
-    .then(function (client) {
-      let text = userTablesQuery.text
-      let args = userTablesQuery.values
-
-      return client.query(text, args)
-        .then(function (res) {
-          client.end()
-          return res.rows.slice()
-        })
-    })
-}
-
-module.exports = PostgresDb

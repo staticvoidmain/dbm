@@ -1,7 +1,8 @@
-'use strict'
 // TODO!!: implement some kind of base DB with some of this shared stuff
-const mssql = require('mssql')
-const sqlgen = require('sql')
+
+import * as mssql from 'mssql'
+import * as sqlgen from 'sql'
+
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 const columns = sqlgen.define({
   name: 'columns',
@@ -31,33 +32,67 @@ const tables = sqlgen.define({
 })
 
 /**
-   * @param {Object} database a database connection info Object
-   * @param {string} database.user username to connect with
-   * @param {string} database.password password for the specified user
-   * @param {string} database.host the host name of the database
-   * @param {string} database.name name of the database to connect to
-   */
-function MicrosoftSql (database) {
-  if (!(this instanceof MicrosoftSql)) {
-    return new MicrosoftSql(database)
+* Creates an instance of the MicrosoftSql adapter.
+*
+* @param {Object} database a database connection info Object
+* @param {string} database.user username to connect with
+* @param {string} database.password password for the specified user
+* @param {string} database.host the host name of the database
+* @param {string} database.name name of the database to connect to
+*/
+export class MicrosoftSql {
+  name: string;
+  separator: string;
+  connect: any;
+
+  constructor(database) {
+    if (!(this instanceof MicrosoftSql)) {
+      return new MicrosoftSql(database)
+    }
+
+    this.connect = function () {
+      let connection = new mssql.Connection({
+        user: database.user,
+        password: database.password,
+        server: database.host,
+        database: database.name
+      })
+
+      return connection.connect()
+    }
+
+    this.name = 'mssql'
+    this.separator = newline + 'go;' + newline
   }
 
-  this.connect = function () {
-    let connection = new mssql.Connection({
-      user: database.user,
-      password: database.password,
-      server: database.host,
-      database: database.name
-    })
 
-    return connection.connect()
+  // useful when scripting a database
+  getSchema() {
+    // todo: this should match more closely with the postgres one
+    var result = {}
+    return this.connect()
+      .then(getAllTables(result))
+      .then(getAllColumns(result))
+      .then(mergeResults(result))
   }
 
-  this.name = 'mssql'
-  this.separator = newline + 'go;' + newline
+  run(query) {
+    return this.connect()
+      .then(function (connection) {
+        let req = new mssql.Request(connection)
+        return req.query(query)
+          .then(function (res) {
+            return res[0]
+          })
+      })
+  }
+
+  getProcedures() {
+    // execute some sp_helptext up in this biatch.
+  }
 }
 
-function getAllColumns (result) {
+function getAllColumns(result) {
   return function (connection) {
     let req = new mssql.Request(connection)
     let query = columns.select().toQuery().text
@@ -68,7 +103,7 @@ function getAllColumns (result) {
   }
 }
 
-function getAllTables (result) {
+function getAllTables(result) {
   return function (connection) {
     let req = new mssql.Request(connection)
     let getAllTables = tables.select().toQuery().text
@@ -79,7 +114,7 @@ function getAllTables (result) {
   }
 }
 
-function mergeResults (result) {
+function mergeResults(result) {
   return function () {
     let tableLookup = {}
 
@@ -107,30 +142,3 @@ function mergeResults (result) {
     return result
   }
 }
-
-// useful when scripting a database
-MicrosoftSql.prototype.getSchema = function () {
-  // todo: this should match more closely with the postgres one
-  var result = {}
-  return this.connect()
-    .then(getAllTables(result))
-    .then(getAllColumns(result))
-    .then(mergeResults(result))
-}
-
-MicrosoftSql.prototype.run = function (query) {
-  return this.connect()
-    .then(function (connection) {
-      let req = new mssql.Request(connection)
-      return req.query(query)
-        .then(function (res) {
-          return res[0]
-        })
-    })
-}
-
-MicrosoftSql.prototype.getProcedures = function () {
-  // execute some sp_helptext up in this biatch.
-}
-
-module.exports = MicrosoftSql

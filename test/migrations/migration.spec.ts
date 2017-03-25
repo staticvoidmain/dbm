@@ -3,16 +3,16 @@
 /* global describe it */
 const MigrationRunner = require('../../tasks/migrate.js')
 import expect from 'chai'
-import readFileSync from 'fs'
-import join from 'path'
+import {readFileSync} from 'fs'
+import {join} from 'path'
 import * as yaml from 'js-yaml'
-import describe from 'mocha'
-
+import {describe, it, beforeEach} from 'mocha'
 
 describe('this goddamn migration runner', function () {
+  
   it('should fucking work', function (done) {
-    let src = path.join(__dirname, 'marketing.yaml')
-    let contents = fs.readFileSync(src)
+    let src = join(__dirname, 'marketing.yaml')
+    let contents = readFileSync(src)
     let doc = yaml.load(contents)
 
     doc.path = src

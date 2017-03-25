@@ -1,7 +1,7 @@
 
 import * as blessed from 'blessed'
-import '../tasks/backup.js'
-import '../lib/database.js'
+import {BackupRunner} from '../tasks/backup.js'
+import {create} from '../lib/database.js'
 
 // todo: check the terminal settings maybe?
 // to make sure they actually see this.
@@ -49,7 +49,7 @@ module.exports = {
       hidden: true
     })
 
-    var db = factory.create(app.env.vendor, app.env)
+    var db = create(app.env.vendor, app.env)
 
     db.on('error', function (err) {
       msg.error(err)

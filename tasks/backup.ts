@@ -1,13 +1,12 @@
 'use strict'
 
+import * as sql from 'sql'
 import { EventEmitter } from 'events'
 import { create as factory } from '../lib/database'
-import * as sql from 'sql'
-
 import { existsSync, unlinkSync, appendFileSync } from 'fs'
 import { join } from 'path'
 
-class BackupRunner extends EventEmitter {
+export class BackupRunner extends EventEmitter {
   sqlgen: any
   db: any
 
