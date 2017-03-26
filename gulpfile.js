@@ -1,10 +1,12 @@
 var gulp = require('gulp')
-var ts = require('gulp-typescript')
-var tsProject = ts.createProject('tsconfig.json')
+var newer = require('gulp-newer')
+var tsc = require('gulp-typescript')
+// var mocha = require('./test/mocha-parallel')
+var tsProject = tsc.createProject('tsconfig.json')
 
-// todo: this is gonna need a lot of work.
 gulp.task('default', function () {
   return tsProject.src()
+        .pipe(newer())
         .pipe(tsProject())
         .js.pipe(gulp.dest('dist'))
 })

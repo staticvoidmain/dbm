@@ -2,6 +2,7 @@
 
 import * as mssql from 'mssql'
 import * as sqlgen from 'sql'
+import {IManagedDatabase} from '../database'
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 const columns = sqlgen.define({
@@ -40,7 +41,7 @@ const tables = sqlgen.define({
 * @param {string} database.host the host name of the database
 * @param {string} database.name name of the database to connect to
 */
-export class MicrosoftSql {
+export class MicrosoftSql implements IManagedDatabase {
   name: string;
   separator: string;
   connect: any;
@@ -64,7 +65,6 @@ export class MicrosoftSql {
     this.name = 'mssql'
     this.separator = newline + 'go;' + newline
   }
-
 
   // useful when scripting a database
   getSchema() {

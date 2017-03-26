@@ -1,7 +1,6 @@
 # dbm
 
-A DBA is just a programmer who only knows one language.
--Ross
+Now anyone can be a DBA!
 
 Use tools to:
 * Analyze
@@ -14,14 +13,15 @@ Use tools to:
 # examples
 
 ``` shell
-$ dbm migrate project.json dev-environment
+$ dbm migrate v2.1-important-release.yaml dev
 
-$ dbm dump database dev customer-service
+$ dbm dump dev/postgres/ross --all
+
+$ dbm compare dev/postgres/ross test/postgres/ross
 
 $ dbm --help
 
 $ dbm --interactive
-
 
 ```
 
@@ -37,17 +37,20 @@ npm install pg
 npm install sqlite3
 ```
 
+# TypeScript
+
+Yeah, so, local hacking is going to require typescript, because I love me some types boys.
+
+ts-node maybe? I'm not sure.
+
 # Migrations
 
-I'm actually NOT super sold on yaml as a format,
-but I think this looks enough like t-sql that DBAs might
-not whine about it.
+The yaml has grown on me. I also support JSON though, in case you don't like it.
 
 ```yaml
 ---
 name: my-first-migration
-no_sort: true
-dbs:
+aliases:
 - captive: reporting.Captive
 - vendor: originations.Vendor
 
@@ -72,3 +75,18 @@ steps:
   on: vendor
 
 ```
+
+# MS SQL
+
+So, for my local development, I was using Microsoft's LocalDB.
+
+```
+SqlLocalDB.exe create marketing-dev
+SqlLocalDB.exe start marketing-dev
+SqlLocalDB.exe info marketing-dev
+
+sqlcmd -S np:\\.\pipe\SOME-PIPE-NAME-HERE\tsql\query -Q "create logon ross with password='abc123'; create user ross; go;"
+
+```
+
+This is just here as a reminder so I don't forget. Lul.

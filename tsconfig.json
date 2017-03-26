@@ -10,13 +10,10 @@
     },
     "typeRoots": [ "node_modules/@types" ],
     "include": [
-        "lib/**/*",
-        "tasks/**/*",
-        "views/**/*"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
-        "**/*.spec.ts",
-        "**/*.spec.js"
+        "**/*.spec.ts"
     ]
 }

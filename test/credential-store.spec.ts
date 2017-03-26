@@ -2,22 +2,50 @@ import { CredentialStore } from '../lib/credential-store'
 import { expect } from 'chai'
 
 describe('the credential store', () => {
+  const phrase = 'thisisonlyatest'
 
-  describe('WHEN file does not exist', () => {
-    it('should create a new store', () => {
-      let store = new CredentialStore()
+  describe("#open", () => {
+    let store;
+    beforeEach(function() {
+      store = new CredentialStore({
+          location: process.cwd(),
+          encrypted: false
+        })
+    })
 
-      store.set('/dev/marketing/ross/sql_pg', 'abc123')
+    describe('WHEN file does not exist', () => {
+      it('should create a new store', () => {
+        store.open(phrase);
+      })
+    })
+
+
+    describe("when encrypted", () => {
+
+      it('requires a correct passphrase', () => {
+        let store = new CredentialStore({
+          encrypted: true,
+          location: process.cwd()
+        })
+      })
     })
   })
 
   describe('#set', () => {
 
+    let store;
+    beforeEach(function() {
+      store = new CredentialStore({
+          location: process.cwd(),
+          encrypted: false
+        })
+      
+      store.open(phrase)
+    })
+
     it('should support UPDATE', () => {
-      let store = new CredentialStore()
 
-      store.open('thisisonlyatest')
-
+      
       store.set('/dev/marketing/ross/sql_pg', 'abc123');
       store.set('/dev/marketing/ross/sql_pg', 'LKJ#082=34mnsadf!')
 
@@ -25,34 +53,41 @@ describe('the credential store', () => {
 
       expect(item.password).to.equal('LKJ#082=34mnsadf!')
 
-      store.close('thisisonlyatest')
+      store.close()
     })
 
     it('should support multiple puts', () => {
-      let store = new CredentialStore()
+      // note these are different environments
+      store.set('/dev/marketing/ross/sql_pg', 'abc123')
+      store.set('/test/marketing/ross/sql_pg', 'anotherpassword')
+      store.set('/prod/marketing/ross/sql_pg', 'zz1!*&^H#*@B')
 
-      store.set('/dev/marketing/ross/sql_pg', 'abc123')
-      store.set('/dev/marketing/ross/sql_pg', 'abc123')
-      store.set('/dev/marketing/ross/sql_pg', 'abc123')
-
-      store.close('thisisonlyatest');
+      store.close();
     })
   })
 
   describe('#get', () => {
+
     let store;
-    beforeEach(() => {
-      store = new CredentialStore()
-      store.open('')
+    beforeEach(function() {
+      store = new CredentialStore({
+          location: process.cwd(),
+          encrypted: false
+        })
+      
+      store.open(phrase)
     })
 
     it('requires a valid path', () => {
-
+      store.set("asdf-sadf-asdf-asdf", "foo")
     })
 
     it('should return the Item on success', () => {
 
-      let item = store.get('')
+      let item = store.get('/dev/marketing/ross/sql_pg')
+
+      expect(item).not.to.be.undefined
+      expect(item.password).to.equal('somepass')
     })
 
     describe('#round-trip', () => {

@@ -7,8 +7,10 @@ export interface IDatabaseSchema {
 }
 
 export interface IManagedDatabase {
-  run: (statement) => void
-  getSchema: () => IDatabaseSchema
+  run: (statement: string) => void
+  query: (statement: string) => Promise<any>
+  getSchema: () => Promise<IDatabaseSchema>
+  on: (event: string, cb: any) => void
 }
 
 export function create (vendor, options): IManagedDatabase {

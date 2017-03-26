@@ -2,7 +2,7 @@
 
 import * as pg from 'pg'
 import * as sqlgen from 'sql'
-import { inherits } from 'util'
+import {IManagedDatabase} from '../database'
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
@@ -206,8 +206,7 @@ const userTablesQuery = tables
   .toQuery()
 
 function mergeResults(values) {
-  let tables = values[0]
-  let columns = values[1]
+  let [tables, columns, keys] = values;
   let tableLookup = {}
 
   for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {

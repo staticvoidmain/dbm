@@ -70,46 +70,50 @@ export interface CredentialItem {
 
 export class CredentialStore {
   private credentials: Map<string, CredentialItem>
-
+  // we can store this
+  private passPhrase: string
   private isOpen: boolean
   private encrypted: boolean
   private new: boolean
   private path: string
 
   /**
-   * TODO: Should this guy take arguments?
+   * Creates a new credential store.
    */
-  constructor() {
+  constructor(opt) {
     this.new = false
+    this.encrypted = opt.encrypted || false
 
-    let locations = [
-      process.env.DBM_HOME,
-      process.env.HOME,
-      process.env.APPDATA,
-      process.cwd()
-    ]
+    if (!opt.location) {
+      let locations = [
+        process.env.DBM_HOME,
+        process.env.HOME,
+        process.env.APPDATA,
+        process.cwd()
+      ]
 
-    let valid = []
-    // probe all the possible locations looking for our credential file.
-    for (var i = 0; i < locations.length; i++) {
-      var element = locations[i]
+      // probe all the possible locations looking for our credential file.
+      for (var i = 0; i < locations.length; i++) {
+        var element = locations[i]
 
-      if (element) {
-        valid.push(element)
+        if (element) {
 
-        let store = join(element, fileName)
-        if (existsSync(store)) {
-          this.path = store;
-          break
+          let store = join(element, fileName)
+          if (existsSync(store)) {
+            this.path = store;
+            break
+          }
         }
       }
+    } else {
+      this.path = join(opt.location, fileName)
     }
 
-    // otherwise create the file.
+    // otherwise create the file in the current directory.
     if (!this.path) {
       this.new = true
 
-      let location = valid[0]
+      let location = process.cwd()
       this.path = join(location, fileName)
 
       writeFileSync(this.path, '')
@@ -145,6 +149,9 @@ export class CredentialStore {
             })
           }
         }
+
+        this.passPhrase = phrase
+        this.isOpen = true
       })
   }
 
@@ -174,7 +181,7 @@ export class CredentialStore {
       let text = lines.join(newline)
 
       if (this.encrypted) {
-        encrypt(text, phrase).pipe(output)
+        encrypt(text, phrase || this.passPhrase).pipe(output)
       }
       else {
         wrap(text).pipe(output)
@@ -185,7 +192,7 @@ export class CredentialStore {
   /**
    * Gets a stored credential by env/server/db/user from the credential store.
    * This value should be transparently passed to the server connection when connecting to that db.
-   * @param {Object} req the credential request object
+   * @param {String} path the path to fetch.
    */
   get(path) {
     ok(this.isOpen, "Credential store not open!")

@@ -1,7 +1,9 @@
+import {IManagedDatabase} from '../database'
+
 const sqlite = require('sqlite3')
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
-export class SqliteDb {
+export class SqliteDb implements IManagedDatabase {
   db: any
   separator: string
   name: string
@@ -11,6 +13,26 @@ export class SqliteDb {
 
     this.separator = ';' + newline
     this.name = 'sqlite3'
+  }
+
+  on(name, handler) {
+    // todo:
+  }
+
+  getSchema() {
+    // todo: 
+    return Promise.resolve({})
+  }
+
+  query(statement) {
+    let self = this
+    return new Promise(function (resolve, reject) {
+      self.db.run(statement, {}, function (err, results) {
+        if (err) return reject(err)
+
+        return resolve(results)
+      })
+    })
   }
 
   run (statement) {
