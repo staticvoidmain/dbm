@@ -254,6 +254,10 @@ class BeginTransaction extends Step {
     // mssql 
 
     this.query = 'BEGIN;'
+
+    if (sqlgen.vendor)
+
+
     return this.query
   }
 }

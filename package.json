@@ -1,11 +1,11 @@
 {
   "name": "dbm",
   "version": "1.0.0",
-  "description": "A database migration tool",
+  "description": "A database Administration, Migration, Backup, Tuning tool",
   "main": "app.js",
   "scripts": {
     "run": "node dist/dbm.js",
-    "test": "mocha --opts mocha.opts && rm -rf test",
+    "test": "mocha --opts mocha.opts",
     "test:auto": "mocha --opts mocha.opts --watch"
   },
   "repository": {
