@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "target": "es2015",
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "types" : [ "node", "core-js" ]
+    },
+    "typeRoots": [ "node_modules/@types" ],
+    "include": [
+        "src/**/*",
+        "test/**/*",
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

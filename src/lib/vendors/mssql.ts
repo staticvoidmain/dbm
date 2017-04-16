@@ -76,10 +76,16 @@ export class MicrosoftSql implements IManagedDatabase {
       .then(mergeResults(result))
   }
 
+  /**
+   * Runs a query, but does not return the results.
+   * @param query transact sql query to execute
+   * @returns {Promise} returns the top result from the query.
+   */
   run(query) {
     return this.connect()
       .then(function (connection) {
         let req = new mssql.Request(connection)
+
         return req.query(query)
           .then(function (res) {
             return res[0]
@@ -87,8 +93,24 @@ export class MicrosoftSql implements IManagedDatabase {
       })
   }
 
+  query(query) {
+    return this.connect()
+      .then(function (connection) {
+        let req = new mssql.Request(connection)
+        return req.query(query)
+          .then(function (res) {
+            return res
+          })
+      })
+  }
+
+
   getProcedures() {
     // execute some sp_helptext up in this biatch.
+  }
+
+  on () {
+    
   }
 }
 

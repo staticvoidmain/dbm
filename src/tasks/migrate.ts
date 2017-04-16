@@ -10,18 +10,9 @@ import {
   create as stepFactory 
 } from './migration/steps'
 
-export interface MigrationDocument {
-  name: string
-  path: string
-  steps: any[]
-
-  // optional bits
-  db: string
-  aliases: object[]
-  disableStepSort: boolean
-  disableBackups: boolean
-  singleTransaction: boolean
-}
+import {
+  MigrationDocument
+} from './migration/document'
 
 enum RunnerState {
   none,
@@ -75,7 +66,6 @@ export class MigrationRunner extends EventEmitter {
     this.db = create(env.vendor, env)
   }
 
-  // options is just the doc, right?
   createSteps(doc: MigrationDocument) {
     let models: Step[]
     let steps = doc.steps

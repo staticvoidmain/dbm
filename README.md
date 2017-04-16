@@ -17,7 +17,7 @@ $ dbm migrate v2.1-important-release.yaml dev
 
 $ dbm dump dev/postgres/ross --all
 
-$ dbm compare dev/postgres/ross test/postgres/ross
+$ dbm compare -db1 dev/postgres/ross -db2 test/postgres/ross
 
 $ dbm --help
 

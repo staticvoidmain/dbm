@@ -17,6 +17,11 @@ export class BackupRunner extends EventEmitter {
     this.db = factory(options.vendor, options)
   }
 
+  /**
+   * this runs a FILE backup. there will also be a backup STEP that runs during a migration.
+   * @param schema if this is schema selective
+   * @param options specific backup options.
+   */
   run(schema, options) {
     if (!schema) {
       throw Error('I need a schema fool')

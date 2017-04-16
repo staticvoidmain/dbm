@@ -1,21 +1,12 @@
 'use strict'
 import * as blessed from 'blessed'
+import { MigrationDocument, testFileExtension } from "../tasks/migration/document";
 
 const fs = require('fs')
 const path = require('path')
 const yaml = require('js-yaml')
 const migration = require('./migration.js')
 const emphasize = require('emphasize')
-
-function testFileExtension (file) {
-  let isJson = file.endsWith('.json')
-  let isYaml = file.endsWith('.yml') || file.endsWith('.yaml')
-
-  return {
-    isJson: isJson,
-    isYaml: isYaml
-  }
-}
 
 module.exports = {
   // notes: these positions are pretty tightly fiddled with.
@@ -124,28 +115,17 @@ module.exports = {
     fm.key('backspace', () => fm.select(0))
 
     fm.on('file', function (file) {
-      let doc = null
-      let test = testFileExtension(file)
 
-      if (test.isYaml || test.isJson) {
-        let contents = fs.readFileSync(file)
+      let doc: MigrationDocument = null
 
-        try {
-          if (test.isYaml) {
-            doc = yaml.safeLoad(contents)
-          } else {
-            doc = JSON.parse(contents)
-          }
-
-          doc.path = file
-        } catch (ex) {
-          msg.error(ex)
-          return
-        }
-
-        migration.show(app, doc)
+      try {
+        doc = new MigrationDocument(file)         
+      } catch (ex) {
+        msg.error(ex)
+        return
       }
 
+      migration.show(app, doc)
       screen.destroy()
     })
 

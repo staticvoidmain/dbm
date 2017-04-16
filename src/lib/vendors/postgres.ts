@@ -7,7 +7,7 @@ import {IManagedDatabase} from '../database'
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
 // was I using EventEmitter to fire off log messages?
-export class PostgresDb {
+export class PostgresDb implements IManagedDatabase {
   config: any;
   separator: string;
   name: string;
@@ -28,7 +28,27 @@ export class PostgresDb {
     this.name = 'postgres'
   }
 
+  on(event: string, cb: any) {
+    
+  }
+
   run(statement, args) {
+    if (typeof statement !== 'string') {
+      throw new Error('Only strings can be passed to run!')
+    }
+
+    return pg.connect(this.config)
+      .then(function (client) {
+        return client.query(statement, args)
+          .then(function (res) {
+            client.end()
+
+            return res
+          })
+      })
+  }
+
+  query(statement, args) {
     if (typeof statement !== 'string') {
       throw new Error('Only strings can be passed to run!')
     }

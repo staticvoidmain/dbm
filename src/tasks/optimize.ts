@@ -30,8 +30,13 @@ export class DatabaseOptimizer {
   private db: IManagedDatabase
   private platform: Platform;
   private version: string // todo: this should be parsed or something.
-
   private missingIndexes: Array<any>
+
+  constructor(db: IManagedDatabase) {
+    // todo: not sure where this is gonna come from.
+    // but we'll connect to the vendor.
+    this.db = db
+  }
 
   analyze() {
 
@@ -64,11 +69,8 @@ export class DatabaseOptimizer {
     // EXEC sp_purge_jobhistory
     // EXEC sp_maintplan_delete_log
     // EXEC sp_delete_backuphistory
-
-
     if (this.platform === Platform.mssql) {
 
     }
-
   }
 }

@@ -3,9 +3,18 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-// todo: support three-tiered things.
-// a.b.ix_c
-function identifier(id: string) {
+export interface IObjectIdentifier {
+  schema: string
+  name: string
+
+  // if this is an index then it will have an object part.
+  // not currently supported.
+  object?: string  
+}
+
+// todo: support  things.
+// schema_name.obj_name.ix_some_name
+function identifier(id: string) : IObjectIdentifier {
   let parts = id.split('.')
 
   if (parts.length > 1) {
@@ -40,6 +49,8 @@ export abstract class Step {
 
   // optional: invoke the step using a different user
   as: string
+
+  // what was this for again?
   root: string
   path: string
 
@@ -193,6 +204,36 @@ class CreateObject extends Step {
   }
 }
 
+// disable a user account to lock the database during migration.
+class DisableAccount extends Step {
+  user: string
+
+  constructor(i, key, step) {
+    super(i, 'DISABLE account');
+
+    this.user = step[key]
+  }
+  
+  render(any: any): string {
+    throw new Error('Method not implemented.');
+  }
+}
+
+class EnableAccount extends Step {
+  user: string
+
+  constructor(i, key, step) {
+    super(i, 'ENABLE account');
+
+    this.user = step[key]
+  }
+  
+  render(any: any): string {
+    throw new Error('Method not implemented.');
+  }
+}
+
+
 class BeginTransaction extends Step {
   constructor(i, key, step) {
     let parts = key.split('.')
@@ -204,29 +245,24 @@ class BeginTransaction extends Step {
 
     this.name = step[key]
     this.type = parts[1]
-    this.root = step.root
-    this.path = step.from
     this.on = step.on
-
   }
 
   render(sqlgen) {
     // todo: we can get the... vendor out and do our own thing.
     // postgres is just BEGIN;
+    // mssql 
 
     this.query = 'BEGIN;'
     return this.query
   }
 }
 
-
-
 class CommitTransaction extends Step {
   constructor(i, key, step) {
     super(i, 'COMMIT transaction')
 
     this.name = step[key]
-    this.root = step.root
     this.on = step.on
   }
 

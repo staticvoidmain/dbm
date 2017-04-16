@@ -15,6 +15,8 @@ export class SqliteDb implements IManagedDatabase {
     this.name = 'sqlite3'
   }
 
+  // should we just hook them all up?
+  // var supportedEvents = [ 'trace', 'profile', 'insert', 'update', 'delete' ];
   on(name, handler) {
     // todo:
   }
@@ -24,10 +26,10 @@ export class SqliteDb implements IManagedDatabase {
     return Promise.resolve({})
   }
 
-  query(statement) {
+  query(statement, args) {
     let self = this
     return new Promise(function (resolve, reject) {
-      self.db.run(statement, {}, function (err, results) {
+      self.db.run(statement, args, function (err, results) {
         if (err) return reject(err)
 
         return resolve(results)
@@ -35,10 +37,10 @@ export class SqliteDb implements IManagedDatabase {
     })
   }
 
-  run (statement) {
+  run (statement, args) {
     let self = this
     return new Promise(function (resolve, reject) {
-      self.db.run(statement, {}, function (err) {
+      self.db.run(statement, args, function (err) {
         if (err) return reject(err)
 
         // this gets us the N rows affected
