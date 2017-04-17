@@ -296,35 +296,39 @@ class RollbackTransaction extends Step {
   }
 }
 
-export function create(i, key, step) {
-  if (key.startsWith('drop')) {
-    return new DropObject(i, key, step)
-  }
+export function create(i, step) {
 
-  if (key.startsWith('create')) {
-    return new CreateObject(i, key, step)
-  }
-
-  // this one is odd because these verbs don't make sense
-  // for all the other step types.
-  // begin/commit/rollback verbs
-  if (key.endsWith('transaction')) {
-    if (key.startsWith('begin')) {
-      return new BeginTransaction(i, key, step)
+  let result: Step = null;
+  for (let key in step) {
+    if (key.startsWith('drop')) {
+      return new DropObject(i, key, step)
     }
 
-    if (key.startsWith('commit')) {
-      return new CommitTransaction(i, key, step)
+    if (key.startsWith('create')) {
+      return new CreateObject(i, key, step)
     }
 
-    if (key.startsWith('rollback')) {
-      return new RollbackTransaction(i, key, step)
+    // this one is odd because these verbs don't make sense
+    // for all the other step types.
+    // begin/commit/rollback verbs
+    if (key.endsWith('transaction')) {
+      if (key.startsWith('begin')) {
+        return new BeginTransaction(i, key, step)
+      }
+
+      if (key.startsWith('commit')) {
+        return new CommitTransaction(i, key, step)
+      }
+
+      if (key.startsWith('rollback')) {
+        return new RollbackTransaction(i, key, step)
+      }
+    }
+
+    if (key === 'run') {
+      return new RunStep(i, key, step)
     }
   }
 
-  if (key === 'run') {
-    return new RunStep(i, key, step)
-  }
-
-  return null
+  throw new Error(`Unrecognized step! ${step}`)
 }

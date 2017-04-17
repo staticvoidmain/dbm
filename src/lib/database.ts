@@ -10,8 +10,8 @@ export interface IDatabaseSchema {
  * Represents a managed database controlled by DBM
  */
 export interface IManagedDatabase {
-  run: (statement: string, args: any) => Promise<any>
-  query: (statement: string, args: any) => Promise<any>
+  run: (statement: string, args?: any) => Promise<any>
+  query: (statement: string, args?: any) => Promise<any>
   getSchema: () => Promise<IDatabaseSchema>
   
   /**
@@ -26,7 +26,8 @@ export interface IManagedDatabase {
 
 // factory function to lazy-load the vendors
 export function create (vendor, options): IManagedDatabase {
-  let Db = require('./vendors/' + vendor)
+  let module = require('./vendors/' + vendor)
+  let factory = module.create
 
-  return new Db(options)
+  return factory(options)
 }

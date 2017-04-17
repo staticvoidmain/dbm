@@ -25,6 +25,16 @@ enum RunnerState {
   stopped
 }
 
+const precedence = {
+  drops: 0,
+  create: 1,
+  trigger: 2,
+  views: 3,
+  constraints: 4,
+  procs: 5,
+  run: 6
+}
+
 /**
  * TODO: support journaling to a database?
  * @param {Object} doc the document describing the migration
@@ -67,16 +77,13 @@ export class MigrationRunner extends EventEmitter {
   }
 
   createSteps(doc: MigrationDocument) {
-    let models: Step[]
+    let models: Step[] = new Array<Step>()
     let steps = doc.steps
     for (let i = 0; i < steps.length; i++) {
       let step = steps[i]
-      // todo: add tag property
       step.root = this.root
-
-      for (let key in step) {
-        models.push(stepFactory(i, key, step))
-      }
+      
+      models.push(stepFactory(i, step))
     }
 
     // each step may define an ON property
@@ -94,20 +101,17 @@ export class MigrationRunner extends EventEmitter {
     return models
   }
 
-  log(message: string) {
+  private log(message: string) {
     this.emit('log', message)
   }
 
-  // currently does nothing. xD
-  sortSteps() {
-    // todo: sort into the proper order.
-    // - drops (in order?)
-    // - create
-    // - trigger
-    // - views
-    // - constraints
-    // - procs
-    // - run
+  // currently does nothing because it's uncalled.
+  private sortSteps() {
+    let p = precedence;
+    
+    this.steps.sort((a, b) => {
+      return p[a.action] - p[b.action]
+    })
   }
 
   start() {
@@ -197,6 +201,7 @@ export class MigrationRunner extends EventEmitter {
 
   validate() {
     // todo: this could look at the migration and do some pre-checks
+    // todo: ensure create has drop
     let self = this
     self.steps.forEach(function (step) {
       // pre-render all the steps
@@ -207,7 +212,5 @@ export class MigrationRunner extends EventEmitter {
         self.emit('error', err)
       }
     })
-
-    // todo: ensure create has drop
   }
 }

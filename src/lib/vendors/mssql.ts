@@ -32,6 +32,10 @@ const tables = sqlgen.define({
   ]
 })
 
+export function create(database) {
+  return new MicrosoftSql(database)
+}
+
 /**
 * Creates an instance of the MicrosoftSql adapter.
 *
@@ -47,9 +51,6 @@ export class MicrosoftSql implements IManagedDatabase {
   connect: any;
 
   constructor(database) {
-    if (!(this instanceof MicrosoftSql)) {
-      return new MicrosoftSql(database)
-    }
 
     this.connect = function () {
       let connection = new mssql.Connection({

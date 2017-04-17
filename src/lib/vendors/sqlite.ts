@@ -3,6 +3,10 @@ import {IManagedDatabase} from '../database'
 const sqlite = require('sqlite3')
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
+export function create(database) {
+  return new SqliteDb(database)
+}
+
 export class SqliteDb implements IManagedDatabase {
   db: any
   separator: string

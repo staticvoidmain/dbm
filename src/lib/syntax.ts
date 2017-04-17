@@ -3,6 +3,7 @@ export const blockCommentStart = '/*'
 export const blockCommentEnd = '*/'
 export const newline = "\n"
 
+// should this be a lookup?
 export const syntax = {
   whitespace: 0,
   keyword: 1,
@@ -13,8 +14,9 @@ export const syntax = {
 
 // todo: make the statement types an enum?
 export const types = {
-  token: { 
-
+  token: {
+    // todo: I have no idea what I'm modeling this after.
+    // I feel like this should be flattened.
   },
   statement: {
     select: 1,

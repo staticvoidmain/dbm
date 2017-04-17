@@ -1,9 +1,9 @@
 'use strict'
 
 import * as blessed from 'blessed'
-const backupView = require('./backup.js')
-const config = require('./config.js')
-const selectMigration = require('./selectMigration.js')
+import { show as showBackup } from './backup'
+import { show as showConfig } from './config'
+import { show as showMigrationSelect } from './selectMigration'
 
 export function show(app) {
   var screen = app.screen()
@@ -32,15 +32,15 @@ export function show(app) {
 
   menu.on('action', function (item, i) {
     if (i === 0) {
-      backupView.show(app)
+      showBackup(app)
     } else if (i === 1) {
-      selectMigration.show(app)
+      showMigrationSelect(app)
     } else if (i === 2) {
       // todo
     } else if (i === 3) {
       // todo
     } else if (i === 4) {
-      config.show(app)
+      showConfig(app)
     }
 
     screen.destroy()

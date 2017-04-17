@@ -1,12 +1,15 @@
-import {MigrationRunner} from '../../tasks/migrate.js'
+import {} from 'mocha'
 import {expect} from 'chai'
 import {readFileSync} from 'fs'
 import {join} from 'path'
 import {load} from 'js-yaml'
+import {MigrationRunner} from '../../src/tasks/migrate'
 
 describe('this goddamn migration runner', function () {
   
   it('should fucking work', function (done) {
+    this.timeout(10000)
+    
     let src = join(__dirname, 'marketing.yaml')
     let contents = readFileSync(src)
     let doc = load(contents)

@@ -13,9 +13,10 @@ const newline = '\n'.charCodeAt(0)
  */
 class Scanner {
   options: any;
-  text: string;
   pos: number;
-  len: number;
+
+  readonly text: string;
+  readonly len: number;
 
   constructor(text, options) {
     this.options = options
@@ -68,15 +69,19 @@ export class Parser {
 
     let statements = []
 
-    // todo: this isn't strictly right.
-    while (scanner.pos < scanner.len) {
+    while (scanner.pos <= scanner.len) {
       
       switch (scanner.token) {
         case ' ':
         case '\t':
           scanner.whitespace()
           break
+
+        default:
+          break
       }
+
+      scanner.pos++
     }
 
     return statements

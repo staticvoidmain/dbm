@@ -28,14 +28,16 @@ const migrate = (args) => {
   }
 
   let [docfile, env, ...rest] = args;
-
+  // todo: search DBMHOME for the environment config.
   var contents = readFileSync(docfile, 'utf8')
   var doc = new MigrationDocument(contents)
   var runner = new MigrationRunner(doc, env)
   
+  runner.on('', function() {
+    
+  })
 
-    // todo: get the runner.
-    // parse the doc, etc
+  runner.start()
   
 }
 
@@ -61,7 +63,7 @@ const isHelp = (arg) => {
 const init = (args) => {
   if (args.length === 0 || isHelp(args[0])) {
     console.log("Dbm - commands:")
-    console.log("  migrate")
+    console.log("  migrate - execute scripts to update your application")
     console.log("  analyze - performs analysis on a specified server")
     console.log("  optimize - fix configuration, apply indexes, cleanup logs")
     console.log("  config - initialize core dbm settings")

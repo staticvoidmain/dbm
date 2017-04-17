@@ -1,4 +1,4 @@
-use Database
+use SomeDb
 go
 
 -- let's be obnoxious with the whitespace.

@@ -1,19 +1,20 @@
 'use strict'
 
-/* global describe it, xit */
-const expect = require('chai').expect
-const factory = require('../../lib/database.js')
+import {} from 'mocha'
+import { expect } from 'chai'
+import { PostgresDb } from '../../src/lib/vendors/postgres'
 
-describe('my shitty postgres wrapper', function () {
-  let db = factory.create('postgres', {
+describe('PostgresDb', function () {
+  
+  let db = new PostgresDb({
     host: 'localhost',
     name: 'ross',
     user: 'sql_pg',
     password: 'abc123'
   })
 
-  // relies on the getTables spec to work properly...
   function expectTableNotToExist (name) {
+
     return db.getAllTables()
       .then(function (tables) {
         tables.forEach(function (t) {
@@ -59,7 +60,6 @@ describe('my shitty postgres wrapper', function () {
       .then(function (res) {
         expect(res).not.to.be.undefined
 
-        // todo: expect the table to actually have been created
         return expectTableToExist('sales.visit')
       })
   })
@@ -99,6 +99,8 @@ describe('my shitty postgres wrapper', function () {
   xit('can dump views')
 
   it('can dump FULL schema info', function () {
+    // this is pretty slow
+    this.timeout(10000)
     return db.getSchema()
       .then(function (schema) {
         expect(schema).to.be.an('object')

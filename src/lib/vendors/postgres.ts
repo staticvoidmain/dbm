@@ -6,6 +6,10 @@ import {IManagedDatabase} from '../database'
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
+export function create(database) {
+  return new PostgresDb(database)
+}
+
 // was I using EventEmitter to fire off log messages?
 export class PostgresDb implements IManagedDatabase {
   config: any;
@@ -28,15 +32,12 @@ export class PostgresDb implements IManagedDatabase {
     this.name = 'postgres'
   }
 
+  // todo: does postgres support events?
   on(event: string, cb: any) {
     
   }
 
-  run(statement, args) {
-    if (typeof statement !== 'string') {
-      throw new Error('Only strings can be passed to run!')
-    }
-
+  run(statement: string, args?) {
     return pg.connect(this.config)
       .then(function (client) {
         return client.query(statement, args)
@@ -48,11 +49,8 @@ export class PostgresDb implements IManagedDatabase {
       })
   }
 
-  query(statement, args) {
-    if (typeof statement !== 'string') {
-      throw new Error('Only strings can be passed to run!')
-    }
-
+  query(statement: string, args?) {
+    
     return pg.connect(this.config)
       .then(function (client) {
         return client.query(statement, args)
@@ -255,7 +253,7 @@ function mergeResults(values) {
 const varchar = 'character varying'
 const char = 'character'
 
-// todo: there are probably more.
+// todo: there are probably more like this
 function coerceColumnTypes(columns) {
   for (let i = 0; i < columns.length; i++) {
     let col = columns[i]

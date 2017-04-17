@@ -2,15 +2,18 @@
 import * as blessed from 'blessed'
 import { MigrationDocument, testFileExtension } from "../tasks/migration/document";
 
-const fs = require('fs')
-const path = require('path')
-const yaml = require('js-yaml')
-const migration = require('./migration.js')
-const emphasize = require('emphasize')
+import {
+  stat,
+  readFileSync
+} from 'fs'
 
-module.exports = {
-  // notes: these positions are pretty tightly fiddled with.
-  show: function (app) {
+import { show as showMigration } from './migration'
+
+import * as path from 'path'
+import * as yaml from 'js-yaml'
+import * as emphasize from 'emphasize'
+
+export function show (app) {
     var screen = app.screen()
     // this is annoying...
     var input = blessed.textbox({
@@ -89,7 +92,7 @@ module.exports = {
       let value = blessed.helpers.cleanTags(item.content)
       let file = path.resolve(fm.cwd, value)
 
-      fs.stat(file, function (err, stat) {
+      stat(file, function (err, stat) {
         if (err) {
           throw err
         }
@@ -98,7 +101,7 @@ module.exports = {
           let test = testFileExtension(value)
 
           if (test.isYaml || test.isJson) {
-            let content = fs.readFileSync(file, 'utf8')
+            let content = readFileSync(file, 'utf8')
             let formatted = test.isYaml
               ? emphasize.highlight('yaml', content)
               : emphasize.highlight('json', content)
@@ -125,7 +128,7 @@ module.exports = {
         return
       }
 
-      migration.show(app, doc)
+      showMigration(app, doc)
       screen.destroy()
     })
 
@@ -133,4 +136,4 @@ module.exports = {
     fm.refresh()
     screen.render()
   }
-}
+
