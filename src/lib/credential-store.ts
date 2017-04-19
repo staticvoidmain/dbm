@@ -12,12 +12,13 @@ import { StringDecoder } from 'string_decoder'
 import { ok } from 'assert'
 import { Readable } from 'stream'
 
+const PATH_DELIMITER = '/'
 const ALGO = 'aes256'
 const FILE_NAME = '.dbm-creds'
 const NEW_LINE = (process.platform === 'win32' ? '\r\n' : '\n')
 
 // wraps text in a readable stream.
-function wrap(text) {
+function wrap(text) : Readable {
   var s: any = new Readable()
   s._read = function noop() { }
   // however there MAY be a case where this fucks up
@@ -42,6 +43,7 @@ function read(stream): Promise<string> {
     })
 
     stream.on('error', (e) => reject(e))
+
     stream.on('end', () => {
       resolve(content);
     })
@@ -130,6 +132,12 @@ export class CredentialStore {
   open(phrase) : Promise<void> {
     ok(phrase, 'passphrase is required')
 
+    if (this.new) {
+      this.isOpen = true
+      this.passPhrase = phrase;
+      return Promise.resolve()
+    }
+
     let stream = createReadStream(this.path, 'utf8')
     let source = this.encrypted
       ? decipher(stream, phrase)
@@ -141,10 +149,9 @@ export class CredentialStore {
 
         if (lines.length > 0) {
           for (var i = 0; i < lines.length; i++) {
-            // todo: if it's malformed, this will just throw.
             let line = lines[i];
             let [path, password] = line.split(' ')
-            let [env, server, db, user] = path.split('/')
+            let [env, server, db, user] = path.split(PATH_DELIMITER)
 
             this.credentials.set(path, {
               environment: env,
@@ -179,7 +186,7 @@ export class CredentialStore {
           item.server,
           item.database,
           item.user
-        ].join('/')
+        ].join(PATH_DELIMITER)
 
         lines.push(path + " " + item.password)
       })
@@ -187,12 +194,16 @@ export class CredentialStore {
       let text = lines.join(NEW_LINE)
 
       if (this.encrypted) {
-        encrypt(text, phrase || this.passPhrase).pipe(output)
+        encrypt(text, phrase || this.passPhrase)
+        .pipe(output)
+        .close()
       }
       else {
-        wrap(text).pipe(output)
+        wrap(text)
+        .pipe(output)
+        .close()
       }
-    }).then(() => {
+
       this.isOpen = false
     })
   }
@@ -222,9 +233,11 @@ export class CredentialStore {
     ok(path.indexOf(' ') === -1, 'path cannot contain spaces')
     ok(password.indexOf(' ') === -1, 'password cannot contain spaces')
 
-    let [env, server, db, user] = path.split('/')
+    let parts = path.split(PATH_DELIMITER);
 
-    ok(env && server && db && user, 'Malformed path!')
+    ok(parts.length === 4, 'Malformed path!')
+    
+    let [env, server, db, user] = path
 
     this.credentials.set(path, {
       environment: env,

@@ -123,7 +123,7 @@ export class MigrationRunner extends EventEmitter {
     }
   }
 
-  next() {
+  private next() {
     if (this.state == RunnerState.paused
       || this.state == RunnerState.terminated) {
       return
