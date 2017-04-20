@@ -193,6 +193,7 @@ export class CredentialStore {
 
       let text = lines.join(NEW_LINE)
 
+      // there's still something screwy about this
       if (this.encrypted) {
         encrypt(text, phrase || this.passPhrase)
         .pipe(output)

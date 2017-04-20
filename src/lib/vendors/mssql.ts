@@ -1,8 +1,9 @@
-// TODO!!: implement some kind of base DB with some of this shared stuff
-
 import * as mssql from 'mssql'
 import * as sqlgen from 'sql'
-import {IManagedDatabase} from '../database'
+import { IManagedDatabase } from '../database'
+import { EventEmitter } from 'events'
+import { mergeResults } from './common'
+import { ok } from "assert";
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 const columns = sqlgen.define({
@@ -21,6 +22,8 @@ const columns = sqlgen.define({
   ]
 })
 
+const getAllColumnsQuery = columns.select().toQuery().text
+
 const tables = sqlgen.define({
   name: 'tables',
   schema: 'information_schema',
@@ -32,8 +35,18 @@ const tables = sqlgen.define({
   ]
 })
 
+const getAllTablesQuery = tables.select().toQuery().text
+
 export function create(database) {
   return new MicrosoftSql(database)
+}
+
+function addArgs(req: mssql.Request, args) {
+  ok(args.length % 2 === 0, "must supply an even number of args!")
+
+  for (var i = 0; i < args.length; i+=2) {
+    req.input(args[i], args[i+1])
+  }
 }
 
 /**
@@ -45,12 +58,17 @@ export function create(database) {
 * @param {string} database.host the host name of the database
 * @param {string} database.name name of the database to connect to
 */
-export class MicrosoftSql implements IManagedDatabase {
+export class MicrosoftSql
+
+  extends EventEmitter
+  implements IManagedDatabase {
+
   name: string;
   separator: string;
   connect: any;
 
   constructor(database) {
+    super()
 
     this.connect = function () {
       let connection = new mssql.Connection({
@@ -67,14 +85,34 @@ export class MicrosoftSql implements IManagedDatabase {
     this.separator = newline + 'go;' + newline
   }
 
-  // useful when scripting a database
   getSchema() {
-    // todo: this should match more closely with the postgres one
-    var result = {}
+    return Promise.all([
+      this.getAllColumns,
+      this.getAllTables,
+      // getAllKeys
+      // getAllProcedures
+      // getAllViews
+    ]).then(mergeResults)
+  }
+
+  getSingleTable(name) {
     return this.connect()
-      .then(getAllTables(result))
-      .then(getAllColumns(result))
-      .then(mergeResults(result))
+      .then(function (connection) {
+
+        let [schema, tableName] = name.split('.')
+
+        let req = new mssql.Request(connection)
+
+        // this is a common query that's copy-pasted
+        let singleTable = tables
+          .select()
+          .where(tables.schema.equals(schema)
+            .and(tables.name.equals(tableName)))
+          .limit(1)
+          .toQuery().text
+
+        return req.query(singleTable)
+      })
   }
 
   /**
@@ -82,10 +120,11 @@ export class MicrosoftSql implements IManagedDatabase {
    * @param query transact sql query to execute
    * @returns {Promise} returns the top result from the query.
    */
-  run(query) {
+  run(query, args = []) {
     return this.connect()
       .then(function (connection) {
         let req = new mssql.Request(connection)
+        addArgs(req, args)
 
         return req.query(query)
           .then(function (res) {
@@ -94,74 +133,42 @@ export class MicrosoftSql implements IManagedDatabase {
       })
   }
 
-  query(query) {
+  query(query, args) {
     return this.connect()
       .then(function (connection) {
         let req = new mssql.Request(connection)
         return req.query(query)
           .then(function (res) {
-            return res
+            return res[0]
           })
       })
   }
-
 
   getProcedures() {
     // execute some sp_helptext up in this biatch.
   }
 
-  on () {
-    
-  }
-}
-
-function getAllColumns(result) {
-  return function (connection) {
-    let req = new mssql.Request(connection)
-    let query = columns.select().toQuery().text
-    return req.query(query)
-      .then(function (res) {
-        result.tables = res[0]
+  getAllColumns() {
+    return this.connect()
+      .then(function (connection) {
+        let req = new mssql.Request(connection)
+        
+        return req.query(getAllColumnsQuery)
+          .then(function (res) {
+            return res[0]
+          })
       })
   }
-}
 
-function getAllTables(result) {
-  return function (connection) {
-    let req = new mssql.Request(connection)
-    let getAllTables = tables.select().toQuery().text
-    return req.query(getAllTables)
-      .then(function (res) {
-        result.columns = res[0]
-      })
-  }
-}
-
-function mergeResults(result) {
-  return function () {
-    let tableLookup = {}
-
-    for (let tableIndex = 0; tableIndex < result.tables.length; tableIndex++) {
-      let table = result.tables[tableIndex]
-      let key = table.schema + '.' + table.name
-
-      tableLookup[key] = table
-      table.columns = []
-    }
-
-    for (let columnIndex = 0; columnIndex < result.columns.length; columnIndex++) {
-      let column = result.columns[columnIndex]
-      let key = column.tableSchema + '.' + column.tableName
-      let table = tableLookup[key]
-
-      if (table) {
-        table.columns.push(column)
-      }
-    }
-
-    // unsorted columns can go now
-    result.columns = null
-
-    return result
+  getAllTables() {
+    return this.connect()
+      .then((connection) => {
+        let req = new mssql.Request(connection)
+     
+        return req.query(getAllTablesQuery)
+          .then(function (res) {
+            return res[0]
+          })
+      }) 
   }
 }

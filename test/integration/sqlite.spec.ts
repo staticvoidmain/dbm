@@ -1,29 +1,37 @@
 'use strict'
 
-import { } from 'mocha'
+import {} from 'mocha'
 import { expect } from 'chai'
-import { PostgresDb } from '../../src/lib/vendors/postgres'
+import { SqliteDb } from '../../src/lib/vendors/sqlite'
 
-describe('PostgresDb', function () {
-
-  let db = new PostgresDb({
-    host: 'localhost',
-    name: 'ross',
-    user: 'sql_pg',
-    password: 'abc123'
+describe('SqliteDb', function () {
+  
+  let db = new SqliteDb({
+    host: ':memory:',
+    verbose: true,
+    cached: false
   })
 
-  function expectTableNotToExist(name) {
-    return db.getSingleTable(name)
-      .then(function (table) {
-        expect(table).to.be.null
+  function expectTableNotToExist (name) {
+
+    return db.getAllTables()
+      .then(function (tables) {
+        tables.forEach(function (t) {
+          let id = t.schema + '.' + t.name
+          expect(id).not.to.equal(name)
+        })
       })
   }
 
-  function expectTableToExist(name) {
-    return db.getSingleTable(name)
-      .then(function (table) {
-        expect(table).not.to.be.null
+  function expectTableToExist (name) {
+    return db.getAllTables()
+      .then(function (tables) {
+        let exists = tables.some(function (t) {
+          let id = t.schema + '.' + t.name
+          return id === name
+        })
+
+        expect(exists).to.equal(true)
       })
   }
 
@@ -56,7 +64,7 @@ describe('PostgresDb', function () {
   })
 
   it('can insert values into tables', function () {
-    return db.run('insert into sales.visit(date) values ($1)', [new Date()])
+    return db.run('insert into sales.visit(date) values (?)', [new Date()])
       .then(function (res) {
         expect(res).not.to.be.undefined
         expect(res.rowCount).to.equal(1)
@@ -96,7 +104,7 @@ describe('PostgresDb', function () {
       .then(function (schema) {
         expect(schema).to.be.an('object')
         expect(schema.tables.length).to.be.greaterThan(0)
-      }).catch(function (ex) {
+      }).catch(function(ex) {
         console.error(ex)
       })
   })

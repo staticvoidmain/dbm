@@ -2,12 +2,45 @@
 
 import { } from 'mocha'
 import { expect } from 'chai'
-import { PostgresDb } from '../../src/lib/vendors/postgres'
+import { MicrosoftSql } from '../../src/lib/vendors/mssql'
+import { exec } from 'child_process'
 
-describe('PostgresDb', function () {
+describe('MicrosoftSql', function () {
 
-  let db = new PostgresDb({
-    host: 'localhost',
+  function run(shell) : Promise<string> {
+    return new Promise(function(resolve, reject) {
+      exec(shell, function(err, stdout, stderr) {
+        if (err) return reject(err);
+
+        resolve(stdout)
+      })
+    })
+  }
+
+  before(() => {
+    return run("SqlLocalDB.exe create spec -s")
+      .then(() => {
+        return run("SqlLocalDB.exe info spec")
+          .then(function (output) {
+             let pipe = /Instance pipe name: .*/g.exec(output)
+
+             let query = `sqlcmd -S ${pipe} -Q "create logon ross with password='abc123'; create user ross; go;`
+
+             return exec(query)
+          })
+      })
+  })
+
+  after(function() {
+    return run("SqlLocalDB.exe stop spec")
+      .then(() => {
+        return run("SqlLocalDB.exe delete spec")
+      })
+  })
+
+  // todo: this named pipe thing needs to be configured.
+  let db = new MicrosoftSql({
+    host: 'np:\\.\pipe\LOCALDB#SH048D43\tsql\query',
     name: 'ross',
     user: 'sql_pg',
     password: 'abc123'
@@ -30,7 +63,7 @@ describe('PostgresDb', function () {
   db.on('error', function (err) { console.error(err) })
 
   it('can run simple queries', function () {
-    return db.run('select 1 as val;')
+    return db.run('select 1 as val;', [])
       .then(function (res) {
         expect(res).not.to.be.undefined
         expect(res.rows.length).to.equal(1)
@@ -39,7 +72,7 @@ describe('PostgresDb', function () {
   })
 
   it('can drop tables', function () {
-    return db.run('drop table "sales"."visit"')
+    return db.run('drop table "sales"."visit"', [])
       .then(function (res) {
         expect(res).not.to.be.undefined
         return expectTableNotToExist('sales.visit')
@@ -47,7 +80,7 @@ describe('PostgresDb', function () {
   })
 
   it('can create tables', function () {
-    return db.run('create table "sales"."visit"(date timestamptz primary key)')
+    return db.run('create table "sales"."visit"(date timestamptz primary key)', [])
       .then(function (res) {
         expect(res).not.to.be.undefined
 
@@ -56,18 +89,15 @@ describe('PostgresDb', function () {
   })
 
   it('can insert values into tables', function () {
-    return db.run('insert into sales.visit(date) values ($1)', [new Date()])
+    return db.run('insert into sales.visit(date) values (@value)', [ 'value', new Date() ])
       .then(function (res) {
         expect(res).not.to.be.undefined
         expect(res.rowCount).to.equal(1)
       })
   })
 
-  it('can dump the keys of a database', function () {
-    return db.getKeys().then(function (keys) {
-      expect(keys).to.exist
-      expect(keys.length).to.be.greaterThan(0)
-    })
+  xit('can dump the keys of a database', function () {
+   
   })
 
   it('can dump tables', function () {

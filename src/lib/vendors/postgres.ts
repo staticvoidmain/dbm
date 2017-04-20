@@ -2,7 +2,9 @@
 
 import * as pg from 'pg'
 import * as sqlgen from 'sql'
-import {IManagedDatabase} from '../database'
+import { IManagedDatabase } from '../database'
+import { mergeResults } from "./common";
+import { EventEmitter } from "events";
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
@@ -11,13 +13,17 @@ export function create(database) {
 }
 
 // was I using EventEmitter to fire off log messages?
-export class PostgresDb implements IManagedDatabase {
+export class PostgresDb
+
+  extends EventEmitter
+  implements IManagedDatabase {
+
   config: any;
   separator: string;
   name: string;
 
   constructor(db: any) {
-
+    super()
     this.config = {
       host: db.host,
       database: db.name,
@@ -30,11 +36,6 @@ export class PostgresDb implements IManagedDatabase {
 
     this.separator = ';' + newline
     this.name = 'postgres'
-  }
-
-  // todo: does postgres support events?
-  on(event: string, cb: any) {
-    
   }
 
   run(statement: string, args?) {
@@ -50,7 +51,7 @@ export class PostgresDb implements IManagedDatabase {
   }
 
   query(statement: string, args?) {
-    
+
     return pg.connect(this.config)
       .then(function (client) {
         return client.query(statement, args)
@@ -70,6 +71,29 @@ export class PostgresDb implements IManagedDatabase {
       this.getAllColumns(),
       this.getKeys()
     ]).then(mergeResults)
+  }
+
+  getSingleTable(name) {
+
+    return pg.connect(this.config)
+      .then(function (client) {
+
+        let [schema, tableName] = name.split('.')
+
+        let singleTable = tables
+          .select()
+          .where(tables.schema.equals(schema)
+            .and(tables.name.equals(tableName)))
+          .limit(1)
+          .toQuery()
+
+        return client.query(singleTable.text, singleTable.args)
+          .then((res) => {
+            client.end();
+
+            return res.rows;
+          })
+      })
   }
 
   getAllColumns() {
@@ -222,33 +246,6 @@ const userTablesQuery = tables
   tables.schema.notLike('pg_%')
     .and(tables.schema.notEqual('information_schema')))
   .toQuery()
-
-function mergeResults(values) {
-  let [tables, columns, keys] = values;
-  let tableLookup = {}
-
-  for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
-    let table = tables[tableIndex]
-    let key = table.schema + '.' + table.name
-
-    tableLookup[key] = table
-    table.columns = []
-  }
-
-  for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-    let column = columns[columnIndex]
-    let key = column.tableSchema + '.' + column.tableName
-    let table = tableLookup[key]
-
-    if (table) {
-      table.columns.push(column)
-    }
-  }
-
-  return {
-    tables: tables
-  }
-}
 
 const varchar = 'character varying'
 const char = 'character'

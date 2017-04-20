@@ -1,36 +1,53 @@
-import {IManagedDatabase} from '../database'
+import { IManagedDatabase } from '../database'
+import { EventEmitter } from "events";
 
 const sqlite = require('sqlite3')
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
+
+import {
+  mergeResults,
+  IDatabaseSchema
+} from './common'
 
 export function create(database) {
   return new SqliteDb(database)
 }
 
-export class SqliteDb implements IManagedDatabase {
+const supportedEvents = [ 'trace', 'profile', 'insert', 'update', 'delete' ];
+
+export class SqliteDb
+
+extends EventEmitter
+implements IManagedDatabase {
   db: any
   separator: string
   name: string
 
+  /**
+   * todo: support cached and verbose and shit.
+   */
   constructor(options) {
-    this.db = new sqlite.Database(options.host)
+    super()
+
+    let Database = options.verbose
+      ? sqlite.verbose().Database
+      : sqlite.Database
+
+    this.db = new Database(options.host)
+
+    supportedEvents.forEach(() => {
+      // todo: attach an event handler.
+    })
 
     this.separator = ';' + newline
-    this.name = 'sqlite3'
-  }
-
-  // should we just hook them all up?
-  // var supportedEvents = [ 'trace', 'profile', 'insert', 'update', 'delete' ];
-  on(name, handler) {
-    // todo:
+    this.name = 'sqlite'
   }
 
   getSchema() {
-    // todo: 
-    return Promise.resolve({})
+    return Promise.resolve()
   }
 
-  query(statement, args) {
+  query(statement, args = []) {
     let self = this
     return new Promise(function (resolve, reject) {
       self.db.run(statement, args, function (err, results) {
@@ -41,7 +58,7 @@ export class SqliteDb implements IManagedDatabase {
     })
   }
 
-  run (statement, args) {
+  run (statement, args = []) {
     let self = this
     return new Promise(function (resolve, reject) {
       self.db.run(statement, args, function (err) {

@@ -1,10 +1,4 @@
-// todo: document this stuff
-export interface IDatabaseSchema {
-  tables: Array<any>
-  procedures: Array<any>
-  views: Array<any>
-  keys: Array<any>
-}
+import { IDatabaseSchema } from "./vendors/common";
 
 /**
  * Represents a managed database controlled by DBM
@@ -12,20 +6,13 @@ export interface IDatabaseSchema {
 export interface IManagedDatabase {
   run: (statement: string, args?: any) => Promise<any>
   query: (statement: string, args?: any) => Promise<any>
-  getSchema: () => Promise<IDatabaseSchema>
-  
-  /**
-   * Handles events and such from the EventEmitter style thingo
-   * 
-   * This might need to be named something else.
-   * 
-   * message?
-   */
-  on: (event: string, cb: any) => void
+  getSchema: () => Promise<any> // todo: fix this
+
+  on(event: string | symbol, listener: Function): this;
 }
 
 // factory function to lazy-load the vendors
-export function create (vendor, options): IManagedDatabase {
+export function create(vendor, options): IManagedDatabase {
   let module = require('./vendors/' + vendor)
   let factory = module.create
 
