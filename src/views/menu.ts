@@ -1,9 +1,9 @@
-'use strict'
 
 import * as blessed from 'blessed'
 import { show as showBackup } from './backup'
 import { show as showConfig } from './config'
 import { show as showMigrationSelect } from './selectMigration'
+import { show as showServerSelect } from './serverSelection'
 
 export function show(app) {
   var screen = app.screen()
@@ -31,8 +31,13 @@ export function show(app) {
   menu.add('Config:   configure dbm')
 
   menu.on('action', function (item, i) {
+    // todo: all of these are actually server-select first.
+    
     if (i === 0) {
-      showBackup(app)
+
+      showServerSelect(app, 
+        (server) => showBackup(app, server))
+        
     } else if (i === 1) {
       showMigrationSelect(app)
     } else if (i === 2) {

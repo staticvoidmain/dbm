@@ -89,9 +89,9 @@ export class PostgresDb
 
         return client.query(singleTable.text, singleTable.args)
           .then((res) => {
-            client.end();
+            client.end()
 
-            return res.rows;
+            return res.rows
           })
       })
   }
@@ -269,5 +269,3 @@ function coerceColumnTypes(columns) {
 
   return columns
 }
-
-

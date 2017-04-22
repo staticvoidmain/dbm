@@ -13,6 +13,7 @@ import {
 import {
   MigrationDocument
 } from './migration/document'
+import { Server } from "../lib/environment";
 
 enum RunnerState {
   none,
@@ -46,7 +47,7 @@ export class MigrationRunner extends EventEmitter {
   root: string
   sqlgen: any
   name: string
-  env: any
+  server: Server
   db: any
   activeStep: any
   stepIndex: number
@@ -55,25 +56,26 @@ export class MigrationRunner extends EventEmitter {
   transactions: Array<string>
   state: RunnerState
 
-  constructor(doc: MigrationDocument, env: any) {
+  constructor(doc: MigrationDocument, server: Server) {
     super()
 
     ok(doc, 'Must supply a valid document')
-    ok(env, 'Must supply a valid environment config')
+    ok(server, 'Must supply a valid environment config')
 
     this.name = doc.name
     this.root = dirname(doc.path)
-    this.sqlgen = sql.create(env.vendor, {})
+    this.sqlgen = sql.create(server.vendor, { })
     this.activeStep = null
     this.stepIndex = 0
     this.stepCount = doc.steps.length
     this.steps = this.createSteps(doc)
-    this.env = env
+    this.server = server
 
     // lazy create them?
     // we might need multiple connections of different types
     // in the worst case scenario...
-    this.db = create(env.vendor, env)
+    // we can just get the host config and look them up.
+    this.db = create(server)
   }
 
   createSteps(doc: MigrationDocument) {
@@ -118,7 +120,7 @@ export class MigrationRunner extends EventEmitter {
     if (this.state == RunnerState.none) {
       this.state = RunnerState.running
       this.log('Migration Started: ' + this.name)
-      this.log('Details: ' + JSON.stringify(this.env))
+      this.log('Details: ' + JSON.stringify(this.server))
       this.next()
     }
   }

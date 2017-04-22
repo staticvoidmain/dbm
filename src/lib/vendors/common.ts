@@ -1,12 +1,17 @@
 export interface IDatabaseSchema {
-  tables: Array<any>
-  procedures: Array<any>
-  views: Array<any>
-  keys: Array<any>
+  tables?: Array<any>
+  procedures?: Array<any>
+  views?: Array<any>
+  keys?: Array<any>
 }
 
 export function mergeResults(values) {
-  let [tables, columns, keys] = values;
+  let [
+    tables,
+    columns,
+    keys
+  ] = values;
+
   let tableLookup = {}
 
   // todo: stitch together the keys.
@@ -31,7 +36,7 @@ export function mergeResults(values) {
   return {
     tables: tables,
     procedures: null,
-    vieiws: null,
+    views: null,
     keys: keys
   }
 }

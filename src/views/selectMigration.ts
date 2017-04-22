@@ -1,4 +1,4 @@
-'use strict'
+
 import * as blessed from 'blessed'
 import { MigrationDocument, testFileExtension } from "../tasks/migration/document";
 

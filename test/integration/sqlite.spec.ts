@@ -7,31 +7,22 @@ import { SqliteDb } from '../../src/lib/vendors/sqlite'
 describe('SqliteDb', function () {
   
   let db = new SqliteDb({
-    host: ':memory:',
+    host: __dirname + '../data/spec.db',
     verbose: true,
     cached: false
   })
 
-  function expectTableNotToExist (name) {
-
-    return db.getAllTables()
-      .then(function (tables) {
-        tables.forEach(function (t) {
-          let id = t.schema + '.' + t.name
-          expect(id).not.to.equal(name)
-        })
+  function expectTableNotToExist(name) {
+    return db.getSingleTable(name)
+      .then(function (table) {
+        expect(table).to.be.null
       })
   }
 
-  function expectTableToExist (name) {
-    return db.getAllTables()
-      .then(function (tables) {
-        let exists = tables.some(function (t) {
-          let id = t.schema + '.' + t.name
-          return id === name
-        })
-
-        expect(exists).to.equal(true)
+  function expectTableToExist(name) {
+    return db.getSingleTable(name)
+      .then(function (table) {
+        expect(table).not.to.be.null
       })
   }
 

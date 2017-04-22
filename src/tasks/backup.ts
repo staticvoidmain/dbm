@@ -1,20 +1,30 @@
-'use strict'
-
 import * as sql from 'sql'
 import { EventEmitter } from 'events'
-import { create as factory } from '../lib/database'
+import { create as factory, IManagedDatabase } from '../lib/database'
 import { existsSync, unlinkSync, appendFileSync } from 'fs'
 import { join } from 'path'
+import { Server } from "../lib/environment";
+import { IDatabaseSchema } from "../lib/vendors/common";
+
+export class IBackupOptions {
+  backupName?: string
+  backupPath?: string
+  scriptPerObject?: boolean
+  safe?: boolean
+}
 
 export class BackupRunner extends EventEmitter {
-  sqlgen: any
-  db: any
+  private sqlgen: any
+  private db: IManagedDatabase
 
-  constructor(options) {
+  constructor(server: Server) {
     super()
 
-    this.sqlgen = sql.create(options.vendor, {})
-    this.db = factory(options.vendor, options)
+    this.sqlgen = sql.create(server.vendor, {})
+    
+    // so... we create the db, just to get the separator...
+    // 4head
+    this.db = factory(server)
   }
 
   /**
@@ -22,7 +32,7 @@ export class BackupRunner extends EventEmitter {
    * @param schema if this is schema selective
    * @param options specific backup options.
    */
-  run(schema, options) {
+  run(schema: IDatabaseSchema, options?: IBackupOptions) {
     if (!schema) {
       throw Error('I need a schema fool')
     }
@@ -30,24 +40,24 @@ export class BackupRunner extends EventEmitter {
     options = options || {}
     let backupName = options.backupName || 'backup.sql'
     let backupPath = options.backupPath
-    let sqlgen = this.sqlgen
 
     if (!options.scriptPerObject) {
       let filePath = join(backupPath, backupName)
       if (existsSync(filePath)) {
+        this.emit('log', 'deleting previous backup file: ' + filePath)
         unlinkSync(filePath)
       }
     }
 
     if (schema.tables) {
-      schema.tables.forEach(function (table) {
-        let tableGenerator = sqlgen.define({
+      schema.tables.forEach((table) => {
+        let tableGenerator = this.sqlgen.define({
           name: table.name,
           schema: table.schema,
           columns: []
         })
 
-        table.columns.forEach(function (col) {
+        table.columns.forEach((col) => {
           tableGenerator.addColumn({
             name: col.name,
             precision: col.precision,
@@ -72,7 +82,17 @@ export class BackupRunner extends EventEmitter {
 
         appendFileSync(
           join(backupPath, backupName), text, 'utf8')
+        
+        this.emit('log', 'table: ' + table.schema + '.' + table.name)
       })
+    }
+
+    if (schema.views) {
+      // todo
+    }
+
+    if (schema.procedures) {
+      
     }
 
     this.emit('done')

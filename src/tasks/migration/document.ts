@@ -51,13 +51,12 @@ export class MigrationDocument implements IMigrationDocument {
     this.path = file
   }
 
-  // todo: validate the minimum requirements
   validate() {
     let messages = []
 
     if (!this.path) messages.push("Missing 'path' property")
-
-    // TODO: 
+    if (!this.name) messages.push("Missing 'name' property")
+    if (!this.steps) messages.push("Missing 'steps' property")
 
     return messages
   }

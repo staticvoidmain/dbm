@@ -8,7 +8,7 @@ import { create } from '../lib/database.js'
 // otherwise make it an asterisk
 const check = 'Y'
 
-export function show(app) {
+export function show(app, server) {
   let self = this
   let flags = []
   let screen = app.screen({
@@ -28,10 +28,6 @@ export function show(app) {
     keys: true,
     width: '70%',
     height: '70%',
-    // border: {
-    //   fg: 'cyan',
-    //   type: 'line'
-    // },
     style: app.styles.listtable
   })
 
@@ -48,13 +44,12 @@ export function show(app) {
     hidden: true
   })
 
-  var db = create(app.env.vendor, app.env)
+  var db = create(server)
 
   db.on('error', function (err) {
     msg.error(err)
   })
 
-  // what about space.
   objects.on('action', function (item) {
     let i = objects.getItemIndex(item)
     let line = self.data[i]
@@ -174,13 +169,13 @@ export function show(app) {
     style: {
       fg: 'white'
     },
-    content: 'what is happening? Why is this not showing up. I really wish I picked a different schreen drawing tool...',
+    content: 'what is happening? Why is this not showing up. I really wish I picked a different screen drawing tool...',
     border: 'line',
     label: 'about',
     parent: configuration
   })
 
-  backupPath.value = process.env.DBM_HOME || process.cwd()
+  backupPath.value = process.env.DBM_HOME
   backupName.value = 'backup.sql'
 
   let lastFocusedElement = null

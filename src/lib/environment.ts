@@ -6,7 +6,7 @@ import { readFileSync } from 'fs'
 hosts:
   dev:
     marketing:
-      vehdor: postgres
+      vendor: postgres
       host: localhost
     
     sales:
@@ -25,15 +25,10 @@ hosts:
  */
 
 export class Server {
+  tier: string
   vendor: string
   name: string
   host: string
-}
-
-// this will be read from the hosts.yml/json file
-export class Environment {
-  name: string
-  servers: Array<Server>
 }
 
 export class EnvironmentConfig {
@@ -43,25 +38,36 @@ export class EnvironmentConfig {
     this.map = new Map<string, Server>()
 
     let contents = readFileSync(file, 'utf8')
-    let temp = file.endsWith(".yml") 
-      ? yaml.safeLoad(contents) 
+    let temp = file.endsWith(".yml")
+      ? yaml.safeLoad(contents)
       : JSON.parse(contents)
 
-      for(let key in temp.hosts) {
-        let servers = temp.hosts[key];
+    for (let key in temp.hosts) {
+      let servers = temp.hosts[key];
 
-        for(let name in servers) {
-          let host = servers[name]
+      for (let name in servers) {
+        let host = servers[name]
+        host.name = name
+        host.tier = key
 
-          this.map.set(key + '/' + name, host)
-        }
+        this.map.set(key + '/' + name, host)
       }
+    }
   }
 
   // finds a host by a given "name"
   // dev/marketing
   // foo/bar
-  find(name) {
+  find(name): Server {
     return this.map.get(name)
+  }
+
+  servers(): Array<Server> {
+    let list = []
+    for (let x of this.map.values()) {
+      list.push(x)
+    }
+
+    return list
   }
 }

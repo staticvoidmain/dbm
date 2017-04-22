@@ -3,14 +3,17 @@
 //    rebuild indexes
 //    flush the plan cache??
 //    clean up internal db
-//    add covering indexes on "hot tables"
+
+//   suggest:
+//    suggest removing unused indexes
+//    suggest covering indexes
 
 
 // todo: suggest partitioning when the table size is larger than some threshold.
 // 
 
-import {IManagedDatabase} from '../lib/database'
-import * as cp from 'child_process'
+import { IManagedDatabase } from '../lib/database'
+import { exec } from 'child_process'
 
 //  This task uses the 
 enum Platform {
@@ -31,15 +34,15 @@ export class DatabaseOptimizer {
   private platform: Platform;
   private version: string // todo: this should be parsed or something.
   private missingIndexes: Array<any>
-
+  
   constructor(db: IManagedDatabase) {
     // todo: not sure where this is gonna come from.
     // but we'll connect to the vendor.
     this.db = db
   }
-
+  
   analyze() {
-
+    
     if (this.platform === Platform.mssql) {
       const missingIndexQuery = load("/mssql/MissingIndexes")
       const fragmentedIndexQuery = load("/mssql/FragmentedIndexes")
@@ -47,30 +50,29 @@ export class DatabaseOptimizer {
       // todo: get physical table sizes?
       // actually we could just delegate to DTA
       // todo: wrap, promisify etc.
-      cp.exec("dta", (err, stdout, stderr) => {
-
-      })
-      // 
+      exec("dta", (err, stdout, stderr) => {
+        // dta doesn't support sql express, feels bad man.
+      }) 
       // this.db.query(missingIndexQuery)
-
       
-
-
-
+      
+      
+      
+      
     }
-
-
-
+    
+    
+    
   }
-
+  
   optimize() {
-
+    
     // # MSSQL
     // EXEC sp_purge_jobhistory
     // EXEC sp_maintplan_delete_log
     // EXEC sp_delete_backuphistory
     if (this.platform === Platform.mssql) {
-
+      
     }
   }
 }
