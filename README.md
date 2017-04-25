@@ -1,3 +1,5 @@
+# just made this repo public, it's currently unfinished.
+
 # dbm
 
 Now anyone can be a DBA!
@@ -13,7 +15,7 @@ Use tools to:
 # examples
 
 ``` shell
-$ dbm migrate v2.1-important-release.yaml dev
+$ dbm migrate v2.1-important-release.yml dev
 
 $ dbm dump dev/postgres/ross --all
 
