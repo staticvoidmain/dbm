@@ -53,24 +53,22 @@ export function show (app) {
 
   // todo: apply passwords and such
   // todo: LISTBAR that controls what mini-view we see. pogchamp.
-  store.open("not_the_final_password").then(() => {
-    let all = store.getAll()
-    let data = []
-    
-    data.push(['path', 'password'])
+  store.open("not_the_final_password")
 
-    for (let kvp of all) {
-      let [ path, value ] = kvp;
+  let all = store.getAll()
+  let data = []
+  
+  data.push(['path', 'password'])
 
-      data.push([ path, value.password ])
-    }
-    
-    credentials.setData(data)
-    credentials.show()
-    credentials.focus()
-    
-    screen.render()
-  })
+  for (let kvp of all) {
+    let [ path, value ] = kvp;
 
+    data.push([ path, value.password ])
+  }
+  
+  credentials.setData(data)
+  credentials.show()
+  credentials.focus()
+  
   screen.render()
 }

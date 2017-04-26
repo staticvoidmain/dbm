@@ -16,6 +16,7 @@ import { EnvironmentConfig } from './lib/environment';
 import { create } from './lib/database';
 import { join } from 'path';
 import { commandHelp } from './lib/cli-help'
+import { CredentialStore } from "./lib/credential-store";
 
 // todo: read some things
 const version = 'v0.1 (alpha)'
@@ -48,7 +49,7 @@ const option = (args, text) => {
 const backup = (args) => {
 
   let [server, ...rest] = args
-  let target = hosts.find(server) 
+  let target = hosts.find(server)
 
   if (!target) {
     die(`Unknown server: ${server}, add to your hosts.yml file and run again`)
@@ -158,14 +159,29 @@ const config = (args) => {
     die('Unrecognized sub-action.')
   }
 
-  if (action === 'dump') {
-    console.log('DBM_HOME: ' + home)
+  let rl = readline.createInterface(process.stdin, process.stdout)
 
-    let string = JSON.stringify(config);
+  console.log('DBM_HOME: ' + home)
+  console.log('hosts: ')
+  console.log(JSON.stringify(hosts.servers(), null, ' '));
 
-    console.log('hosts: ')
-    console.log(string);
-  }
+  rl.question("enter passphrase: ", function (phrase) {
+
+    // todo: if phrase is falsy, try non-encrypted
+    let store = new CredentialStore({ encrypted: false })
+    console.log('credentials: ')
+
+    try {
+      store.open(phrase)
+      console.log(store.getAll())
+
+      store.close();
+    } catch (e) {
+      console.log(chalk.red(e))
+    }
+
+    rl.close()
+  })
 }
 
 const analyze = (args) => {
@@ -173,6 +189,13 @@ const analyze = (args) => {
     die('dbm analyze some/server/db --config=analysis.yml --verbose')
   }
 }
+
+const compare = (args) => {
+  if (!args.length || args[0] === 'help') {
+    die('dbm compare dev/foo test/foo')
+  }
+}
+
 
 const optimize = (args) => {
   if (!args.length || args[0] === 'help') {
@@ -189,7 +212,7 @@ const help = (args) => {
   if (help) {
     console.log(chalk.bold(help.command))
     console.log(help.description)
-    
+
     for (let example of help.examples) {
       console.log(chalk.italic(example))
     }
@@ -203,7 +226,7 @@ const initialize = (args) => {
 
   rl.question('Where would you to save things? (default: $HOME)', function (answer) {
     if (existsSync(answer)) {
-      
+
       if (process.platform === 'win32') {
         exec(`setx DBM_HOME ${answer}`)
       } else {
@@ -222,6 +245,7 @@ const showDefaultHelp = () => {
   console.log('   migrate - execute scripts to update your application')
   console.log('   analyze - performs analysis on a specified server')
   console.log('   optimize - fix configuration, apply indexes, cleanup logs')
+  console.log('   compare - fix configuration, apply indexes, cleanup logs')
   console.log('   config - initialize core dbm settings')
   console.log('   show - starts a curses-style ui')
   process.exit(0)
@@ -235,6 +259,7 @@ const commands = {
   analyze: analyze,
   optimize: optimize,
   config: config,
+  compare: compare,
   help: help,
   show: (args) => {
     show()
@@ -257,6 +282,7 @@ const init = (args) => {
     die('run "dbm help <command>" for usage info.')
   }
 
+  console.log(args)
   handler(args.slice(1))
 }
 
@@ -269,6 +295,18 @@ if (process.argv.length <= 2) {
 
   var configPath = join(home, 'hosts.yml')
   var hosts = new EnvironmentConfig(configPath)
+
+  // todo: keep track of any of our promises outstanding.
+  var unhandledRejections = new Map();
+  
+  process.on('unhandledRejection', (reason, p) => {
+    // todo: maybe a timestamp.
+    unhandledRejections.set(p, reason);
+  });
+
+  process.on('rejectionHandled', (p) => {
+    unhandledRejections.delete(p);
+  });
 }
 
 init(process.argv.slice(2))

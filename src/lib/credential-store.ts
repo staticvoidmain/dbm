@@ -17,18 +17,6 @@ const ALGO = 'aes256'
 const FILE_NAME = '.dbm-creds'
 const NEW_LINE = (process.platform === 'win32' ? '\r\n' : '\n')
 
-// wraps text in a readable stream.
-function wrap(text) : Readable {
-  var s: any = new Readable()
-  s._read = function noop() { }
-  // however there MAY be a case where this fucks up
-  // if the string is too long. how big are the chunks supposed to be?
-  s.push(text)
-  s.push(null)
-
-  return s
-}
-
 /**
  * 
  * @param stream a ReadableStream
@@ -53,13 +41,18 @@ function read(stream): Promise<string> {
 function encrypt(text, password) {
   let cipher = createCipher(ALGO, password)
 
-  return wrap(text).pipe(cipher)
+  var cryptoText = cipher.update(text, 'utf8', 'hex')
+  cryptoText += cipher.final('hex');
+
+  return cryptoText;
 }
 
 function decipher(stream, password) {
   let decipher = createDecipher(ALGO, password)
+  var text = decipher.update(text, 'hex', 'utf8')
+  text += decipher.final('utf8');
 
-  return stream.pipe(decipher)
+  return text;
 }
 
 export interface CredentialItem {
@@ -70,10 +63,16 @@ export interface CredentialItem {
   password: string
 }
 
+/**
+ * I'm not rolling my own crypto, don't panic. xD
+ * 
+ * This is really just a simple way to keep your credentials safe.
+ * 
+ * You can rotate the keys yourself from the console.
+ */
 export class CredentialStore {
+  private modified: boolean;
   private credentials: Map<string, CredentialItem>
-  // we can store this and use it to close the file
-  // when the user is done with it.
   private passPhrase: string
   private isOpen: boolean
   private encrypted: boolean
@@ -88,26 +87,13 @@ export class CredentialStore {
     this.encrypted = opt.encrypted || false
     this.credentials = new Map<string, CredentialItem>()
 
+    // todo: we don't actually support encryption yet...
+    if (this.encrypted) throw Error("Not Supported")
+    
     if (!opt.location) {
-      let locations = [
-        process.env.DBM_HOME,
-        process.env.HOME,
-        process.env.APPDATA,
-        process.cwd()
-      ]
-
-      // probe all the possible locations looking for our credential file.
-      for (var i = 0; i < locations.length; i++) {
-        var element = locations[i]
-
-        if (element) {
-
-          let store = join(element, FILE_NAME)
-          if (existsSync(store)) {
-            this.path = store;
-            break
-          }
-        }
+      let store = join(process.env.DBM_HOME, FILE_NAME)
+      if (existsSync(store)) {
+        this.path = store;
       }
     } else {
       // they specified a path, but it doesn't exist.
@@ -129,54 +115,58 @@ export class CredentialStore {
     }
   }
 
-  open(phrase) : Promise<void> {
+  open(phrase) {
     ok(phrase, 'passphrase is required')
 
     if (this.new) {
       this.isOpen = true
       this.passPhrase = phrase;
-      return Promise.resolve()
+      return;
     }
 
-    let stream = createReadStream(this.path, 'utf8')
-    let source = this.encrypted
-      ? decipher(stream, phrase)
-      : stream
+    let text = readFileSync(this.path, 'utf8');
 
-    return read(source)
-      .then((text) => {
-        let lines = text.split(NEW_LINE)
+    if (this.encrypted) {
+      text = decipher(text, phrase)
+    }
 
-        if (lines.length > 0) {
-          for (var i = 0; i < lines.length; i++) {
-            let line = lines[i];
-            let [path, password] = line.split(' ')
-            let [env, server, db, user] = path.split(PATH_DELIMITER)
+    let lines = text.split(NEW_LINE)
 
-            this.credentials.set(path, {
-              environment: env,
-              server: server,
-              database: db,
-              user: user,
-              password: password
-            })
-          }
-        }
+    if (lines.length > 0) {
+      for (var i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        let [path, password] = line.split(' ')
+        let [env, server, db, user] = path.split(PATH_DELIMITER)
 
-        this.passPhrase = phrase
-        this.isOpen = true
-      })
+        this.credentials.set(path, {
+          environment: env,
+          server: server,
+          database: db,
+          user: user,
+          password: password
+        })
+      }
+    }
+
+    this.passPhrase = phrase
+    this.isOpen = true
   }
 
   // this actually allows the passphrase to be updated once the file has been opened
   // so that's a nice benefit.
-  close(phrase?: string) : Promise<any> {
+  close(phrase?: string): Promise<any> {
     ok(this.isOpen, "Credential store not open!")
+
+    // if this store hasn't been modified, then we don't need to flush to the file system.
+    if (this.passPhrase === phrase && !this.modified) {
+      this.isOpen = false;
+      return Promise.resolve(true)
+    }
 
     return new Promise((resolve, reject) => {
       let output = createWriteStream(this.path, 'utf8')
 
-      output.on('error', () => { reject() })
+      output.on('error', (e) => { reject(e) })
       output.on('finish', () => { resolve() })
 
       let lines = []
@@ -195,14 +185,11 @@ export class CredentialStore {
 
       // there's still something screwy about this
       if (this.encrypted) {
-        encrypt(text, phrase || this.passPhrase)
-        .pipe(output)
-        .close()
+        let cipherText = encrypt(text, phrase || this.passPhrase)
+        writeFileSync(this.path, cipherText)
       }
       else {
-        wrap(text)
-        .pipe(output)
-        .close()
+        writeFileSync(this.path, text)
       }
 
       this.isOpen = false
@@ -237,7 +224,7 @@ export class CredentialStore {
     let parts = path.split(PATH_DELIMITER);
 
     ok(parts.length === 4, 'Malformed path!')
-    
+
     let [env, server, db, user] = path
 
     this.credentials.set(path, {
@@ -247,5 +234,12 @@ export class CredentialStore {
       user: user,
       password: password
     })
+
+    this.modified = true
+  }
+
+  delete(path) {
+    // todo: support removing a key
+    this.modified = true
   }
 }

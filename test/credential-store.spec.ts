@@ -50,10 +50,8 @@ describe('the credential store', () => {
 
     describe('WHEN file does not exist', () => {
       it('should create a new store', () => {
-
-        return store.open(phrase).then(function () {
-          expect(existsSync(store.path)).to.equal(true)
-        });
+        store.open(phrase);
+        expect(existsSync(store.path)).to.equal(true)
       })
     })
   })
@@ -61,7 +59,7 @@ describe('the credential store', () => {
   describe("when unencrypted", function () {
 
     beforeEach(function () {
-      return store.open(phrase)
+      store.open(phrase)
     })
 
     describe('#set', () => {
@@ -100,20 +98,17 @@ describe('the credential store', () => {
 
         store.set('dev/marketing/ross/sql_pg', "somepass")
 
-        return store.close()
-          .then(() => store.open(phrase))
-          .then(() => {
+        store.close()
+        store.open(phrase)
 
-            let item = store.get('dev/marketing/ross/sql_pg')
-            expect(item).not.to.be.undefined
-            expect(item.password).to.equal('somepass')
-          });
+        let item = store.get('dev/marketing/ross/sql_pg')
+        expect(item).not.to.be.undefined
+        expect(item.password).to.equal('somepass')
       })
     })
   })
 
   /*
-  
     describe("when encrypted", () => {
       let store;
       beforeEach(function() {
@@ -176,7 +171,5 @@ describe('the credential store', () => {
         })
       })
     })
-  
   */
-
 })

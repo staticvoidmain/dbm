@@ -48,7 +48,7 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
     //   this.db.on(e, (args) => this.emit(e, args))
     // })
 
-    // todo: is it semicolon?
+    // todo: is it actually semicolon?
     this.separator = ';' + newline
     this.name = 'sqlite'
   }

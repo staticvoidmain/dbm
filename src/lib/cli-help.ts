@@ -11,7 +11,8 @@ export class HelpItem {
   }
 }
 
-// should these all support including credentials in the commands?
+// todo: should these all support including credentials in the commands?
+// todo: 
 export const commandHelp = {
   "init": new HelpItem("init", "Initializes your dbm install", [
     'dbm init'
@@ -27,8 +28,12 @@ export const commandHelp = {
     'dbm migrate my/server migration.yml --log=migration.log'
   ]),
   
-  "analyze": new HelpItem("analyze", "", [
-    'dbm analyze'
+  "analyze": new HelpItem("analyze <db> [...options]", "", [
+    'dbm analyze dev/sales --all'
+  ]),
+
+  "compare": new HelpItem("compare <db1> <db2>", "", [
+    'dbm compare dev/sales prod/sales --diff-rowcount'
   ]),
   
   "optimize": new HelpItem("optimize", "", [
