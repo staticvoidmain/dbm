@@ -15,8 +15,14 @@ import { MigrationDocument } from './tasks/migration/document';
 import { EnvironmentConfig } from './lib/environment';
 import { create } from './lib/database';
 import { join } from 'path';
-import { commandHelp } from './lib/cli-help'
-import { CredentialStore } from "./lib/credential-store";
+
+import {
+  commandHelp,
+  showSimpleHelp,
+  detailedHelp
+} from './lib/cli-help'
+
+import { CredentialStore } from './lib/credential-store';
 
 // todo: read some things
 const version = 'v0.1 (alpha)'
@@ -25,37 +31,38 @@ const flag = (args, text) => {
   return args.indexOf(text) > -1
 }
 
+// one of the few mutable things in the file.
+let hosts
+
 /**
  * Extracts arg values of the form --arg-name=value
  * @param args argv from the process, but scoped to the specific sub-command
  * @param text the option flag to match
  */
 const option = (args, text) => {
-  let token = text + '=';
+  const token = text + '=';
 
   for (let i = 0; i < args.length; i++) {
-    let e = args[i];
+    const e = args[i];
 
     if (e.startsWith(token)) {
-      let [_, val] = e.split('=')
+      const [_, val] = e.split('=')
 
       return val
     }
   }
-
-  return null
 }
 
 const backup = (args) => {
 
-  let [server, ...rest] = args
-  let target = hosts.find(server)
+  const [server, ...rest] = args
+  const target = hosts.find(server)
 
   if (!target) {
     die(`Unknown server: ${server}, add to your hosts.yml file and run again`)
   }
 
-  let options = {
+  const options = {
     scriptPerObject: true,
     safe: true
   }
@@ -65,11 +72,11 @@ const backup = (args) => {
     options.safe = flag(rest, '--safe')
   }
 
-  let db = create(target)
+  const db = create(target)
 
   db.getSchema()
     .then((schema) => {
-      let runner = new BackupRunner(target)
+      const runner = new BackupRunner(target)
       runner.on('log', (msg) => console.log(msg))
       runner.on('done', () => process.exit(0))
 
@@ -83,10 +90,10 @@ const die = (message) => {
 }
 
 const log = function (message) {
-  let d = new Date()
-  let date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
-  let time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
-  let ts = date + ' ' + time
+  const d = new Date()
+  const date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
+  const time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
+  const ts = date + ' ' + time
 
   console.log(chalk.yellow(ts) + ': ' + message)
 }
@@ -102,13 +109,13 @@ const migrate = (args) => {
     return [hits.length ? hits : completions, line];
   }
 
-  let c: any = completer // ignore typechecking
-  let rl = readline.createInterface(process.stdin, process.stdout, c)
-  let [docfile, envName, ...rest] = args;
+  const c: any = completer // ignore typechecking
+  const rl = readline.createInterface(process.stdin, process.stdout, c)
+  const [docfile, envName, ...rest] = args;
 
-  let server = hosts.find(envName)
-  let doc = new MigrationDocument(docfile)
-  let runner = new MigrationRunner(doc, server)
+  const server = hosts.find(envName)
+  const doc = new MigrationDocument(docfile)
+  const runner = new MigrationRunner(doc, server)
 
   function prompt() {
     const failed = 'Step failed! (r)etry, (s)kip, (c)ancel (default: r)'
@@ -148,27 +155,30 @@ const migrate = (args) => {
     rl.close()
   })
 
-  // todo: explain the steps?
-  runner.start()
+  // todo: explain steps.
+  rl.question('Start migration?', function (answer) {
+      answer === 'y' && runner.start()
+      answer === 'n' && process.exit(0)
+  })
 }
 
 const config = (args) => {
-  let action = args.unshift()
+  const action = args.unshift()
 
   if (!action) {
     die('Unrecognized sub-action.')
   }
 
-  let rl = readline.createInterface(process.stdin, process.stdout)
+  const rl = readline.createInterface(process.stdin, process.stdout)
 
   console.log('DBM_HOME: ' + home)
   console.log('hosts: ')
-  console.log(JSON.stringify(hosts.servers(), null, ' '));
+  console.log(JSON.stringify(hosts.servers(), undefined, ' '));
 
-  rl.question("enter passphrase: ", function (phrase) {
+  rl.question('enter passphrase: ', function (phrase) {
 
     // todo: if phrase is falsy, try non-encrypted
-    let store = new CredentialStore({ encrypted: false })
+    const store = new CredentialStore({ encrypted: false })
     console.log('credentials: ')
 
     try {
@@ -206,14 +216,14 @@ const optimize = (args) => {
 const help = (args) => {
   if (args.length === 0) showDefaultHelp();
 
-  let command = args.shift();
-  let help = commandHelp[command]
+  const command = args.shift();
+  const help = commandHelp[command]
 
   if (help) {
     console.log(chalk.bold(help.command))
     console.log(help.description)
 
-    for (let example of help.examples) {
+    for (const example of help.examples) {
       console.log(chalk.italic(example))
     }
   }
@@ -222,7 +232,7 @@ const help = (args) => {
 }
 
 const initialize = (args) => {
-  let rl = readline.createInterface(process.stdin, process.stdout)
+  const rl = readline.createInterface(process.stdin, process.stdout)
 
   rl.question('Where would you to save things? (default: $HOME)', function (answer) {
     if (existsSync(answer)) {
@@ -241,13 +251,9 @@ const initialize = (args) => {
 const showDefaultHelp = () => {
   console.log(` Dbm - ${version}`)
   console.log('commands:')
-  console.log('   init - initializes a new dbm install')
-  console.log('   migrate - execute scripts to update your application')
-  console.log('   analyze - performs analysis on a specified server')
-  console.log('   optimize - fix configuration, apply indexes, cleanup logs')
-  console.log('   compare - fix configuration, apply indexes, cleanup logs')
-  console.log('   config - initialize core dbm settings')
-  console.log('   show - starts a curses-style ui')
+
+  showSimpleHelp((l) => console.log(l))
+
   process.exit(0)
 }
 
@@ -266,16 +272,16 @@ const commands = {
   }
 }
 
-let home = process.env.DBM_HOME
+const home = process.env.DBM_HOME
 
 const init = (args) => {
-  let handler = commands[args[0]];
+  const handler = commands[args[0]];
 
   if (!handler) {
     console.log(chalk.red('Unrecognized command: ' + args[0]))
 
     console.log('valid commands:')
-    for (let key in commands) {
+    for (const key in commands) {
       console.log('  ' + key)
     }
 
@@ -293,12 +299,11 @@ if (process.argv.length <= 2) {
     die('Missing DBM_HOME environment variable.')
   }
 
-  var configPath = join(home, 'hosts.yml')
-  var hosts = new EnvironmentConfig(configPath)
+  hosts = new EnvironmentConfig(join(home, 'hosts.yml'))
 
   // todo: keep track of any of our promises outstanding.
-  var unhandledRejections = new Map();
-  
+  const unhandledRejections = new Map();
+
   process.on('unhandledRejection', (reason, p) => {
     // todo: maybe a timestamp.
     unhandledRejections.set(p, reason);
