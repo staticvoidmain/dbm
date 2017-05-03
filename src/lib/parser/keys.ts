@@ -27,6 +27,7 @@ export const enum Chars {
   at = 64,
   openBrace = 91,
   singleQuote = 39,
+  doubleQuote = 34,
   closeBrace = 93,
   underscore = 95,
   num_0 = 48,

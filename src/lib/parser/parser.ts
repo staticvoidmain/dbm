@@ -1,8 +1,10 @@
 // okay, let's keep this on hold for a bit.
 // I may have opened myself up to some annoying complications by supporting
 // code generation for multiple platforms...
-import * as syntax from './syntax'
-import {Chars} from './keys'
+import { Scanner } from './scanner'
+import { Chars } from './keys'
+import { SyntaxKind } from './syntax';
+import { SyntaxNode } from './ast'
 
 // todo: map these to syntaxkinds, and all the other crazy unsupported
 // keywords just map to SyntaxKind.miscKeyword
@@ -39,54 +41,89 @@ const reserved = [
   'where', 'while', 'with', 'within group', 'writetext'
 ]
 
+export class ParseTree {
+  nodes: Array<SyntaxNode>
+}
+
 export class Parser {
-  options: any;
-  state: any;
+  private scanner: Scanner
 
-  constructor(options) {
-    this.options = options
-  }
-
-  visit(scanner) {
+  private next(): SyntaxNode {
 
     const statements = []
 
-    while (scanner.pos <= scanner.len) {
+    while (true) {
+      const token = this.scanner.scan()
 
-      switch (scanner.token) {
-        case Chars.space:
-        case Chars.tab:
-          scanner.whitespace()
-          break
+      switch (token.kind) {
+        case SyntaxKind.use:
+        // todo: parse the database if this is mssql.
+        case SyntaxKind.declare:
+          this.scanner.scanVariableDeclarationList()
+        // todo: declare some locals
+
+        case SyntaxKind.select:
+          // todo: perhaps this is too complex for the scanner... we don't have a terminal
+          // to know when we're done scanning.
+          this.scanner.scanSelectColumnList()
+          let fromOrInto = this.expect(SyntaxKind.from_clause | SyntaxKind.into_expression)
+          if (fromOrInto.kind === SyntaxKind.into_expression) {
+
+          }
+
+
+        case SyntaxKind.insert:
+          // todo: insert into X values (xyz)
+          // todo: insert X select Y from Z
+        case SyntaxKind.update:
+        case SyntaxKind.create:
+        case SyntaxKind.drop:
 
         default:
           break
       }
 
-      scanner.pos++
     }
-
-    return statements
   }
 
-  scan(script) {
-    // todo: options what was my plan here?
-    return new Scanner(script, {
-
-    })
+  private expect(kind: SyntaxKind) {
+    const next = this.scanner.scan();
+    if (next.kind !== kind) {
+      // error?
+    }
   }
+  private expect(kind: SyntaxKind) {
+    const next = this.scanner.scan();
+    if (next.kind !== kind) {
+      // error?
+    }
+  }
+
+
+
   /**
-   * Parse a given sql string into... blocks.
-   *
-   * TODO: figure out a good AST for this.
+   * Parse a given sql string into a tree.
    *
    * @param script the script to parse.
    * @returns a list of statements within the script.
    */
-  parse(script) {
-    const scanner = this.scan(script)
-    const statements = this.visit(scanner)
+  parse(script, info): ParseTree {
+    this.scanner = new Scanner(script, { skipTrivia: true });
 
-    return statements
+    return undefined
+
+    /*
+    // this is sync CPU bound
+    this.scan(script)
+    while (true) {
+      const token = this.next()
+
+      // push things into the array of statements.
+      // todo: handle all the tokens.
+    }
+
+    // return statements
+
+    */
   }
 };

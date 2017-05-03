@@ -1,10 +1,8 @@
-// we could name this NodeType or something so it isn't a blatant
-// ripoff of typescript.
 export const enum SyntaxKind {
-  Unknown,
+  unknown,
   // tokens
-  singleLineComment,
-  blockComment,
+  whitespace,
+  newline,
   openParen,
   closeParen,
   openBracket,
@@ -12,8 +10,17 @@ export const enum SyntaxKind {
   at,                   // *
   atAt,                 // @@
   ltGt,                 // <>
-
+  notEqual,             // !=
+  equal,                // =
+  lessThan,             // <
+  greaterThan,          // >
+  lessThanEqual,        // <=
+  greaterThanEqual,     // >=
+  singleLineComment,    // --
+  blockCommentStart,    // /*
+  blockCommentEnd,      // */
   // keywords
+  go,
   null,
   and,
   or,
@@ -40,10 +47,13 @@ export const enum SyntaxKind {
   use,
   set,
   procedure,
+  trigger,
+  column,
   miscKeyword, // to sneak around the pgsql/mssql/mysql diffs
 
   // expressions
   select_expession,
+  into_expression,
   from_clause,
   where_clause,
   group_by,
@@ -52,13 +62,16 @@ export const enum SyntaxKind {
   begin_transaction,
   commit_transaction,
   rollback_transaction,
-  temp_table_reference,
-  variable_reference,
+  temp_table,
+  shared_temp_table,
+  local_variable_reference,
   boolean_expression,
   numeric_literal,
   boolean_literal,
   string_literal,
-
+  quoted_identifier,
+  table_alias,
+  column_alias,
   // todo: all kinds of kinds
 }
 

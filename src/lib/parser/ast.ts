@@ -10,7 +10,7 @@ as many kinds of sql specifications as possible
   begin
     select *
     from Foo.Bar.Baz
-    where Val > @x
+    where Val > @x or Val < @x
   end
 
   if_statement
@@ -39,26 +39,49 @@ as many kinds of sql specifications as possible
 
 import { SyntaxKind } from './syntax'
 
-export interface Identitifier extends Node {
-  text: string
-}
+export type LogicalOperator =
+  SyntaxKind.lessThan
+  | SyntaxKind.greaterThan
+  | SyntaxKind.lessThanEqual
+  | SyntaxKind.greaterThanEqual
+  | SyntaxKind.ltGt
+  | SyntaxKind.notEqual
+  | SyntaxKind.equal;
 
 export interface TextRange {
-  pos: number
+  start: number
   end: number
 }
 
-export interface Node extends TextRange {
+export interface SyntaxNode extends TextRange {
   kind: SyntaxKind
   parent?: Node
 }
 
-// todo: types and interfaces oh my!
-export type CommentKind =
+export interface Identitifier extends SyntaxNode {
+  text: string
+}
+
+export type Comment =
   SyntaxKind.singleLineComment
   | SyntaxKind.blockComment;
 
 export interface CommentRange extends TextRange {
-  hasTrailingNewLine?: boolean;
-  kind: CommentKind;
+  kind: Comment;
+}
+
+export interface WhereClause extends SyntaxNode {
+  // predicate
+}
+
+export interface FromClause extends SyntaxNode {
+  
+}
+
+export interface DeclareStatement extends SyntaxNode {
+  // todo: support duplicate declarations in a single declare
+}
+
+export interface WhereClause extends SyntaxNode {
+
 }

@@ -1,32 +1,40 @@
-import {Chars} from './keys'
-import {SyntaxKind} from './syntax'
+import { Chars } from './keys'
+import { SyntaxKind } from './syntax'
 
-/**
- * heavily inspired by the typescript compiler's scanner/lexer
- * @param {Object} options
- */
+function isLetter(ch): boolean {
+  return Chars.A >= ch && ch <= Chars.Z
+      || Chars.a >= ch && ch <= Chars.z
+}
 
 function isDigit(charCode): boolean {
   return Chars.num_0 <= charCode && charCode <= Chars.num_9
 }
 
-function isIdentifierStart(charCode): boolean {
-  // sql should be... words only?
-  return Chars.num_0 <= charCode && charCode <= Chars.num_9
-}
-
-
+/**
+ * Basic token state so I don't have to read everything off the parser.
+ * though, realistically, that's probably going to happen.
+ */
 export class Token {
-  value: any
+  start: Number
+  end: Number
   kind: SyntaxKind
+  value?: any
+  flags?: Number
+
+  constructor(kind, start, end) {
+    this.kind = kind;
+    this.start = start;
+    this.end = end;
+  }
 }
 
 export class Scanner {
   private pos: number;
-
+  private currentToken: Token
   private readonly options: any;
   private readonly text: string;
   private readonly len: number;
+  private readonly lines: Array<number>
 
   constructor(text, options) {
     this.options = options
@@ -35,25 +43,44 @@ export class Scanner {
     this.len = text.length
   }
 
+  // map of line endings
+  private pushLine() {
+    this.lines.push(this.pos)
+  }
+
   whitespace() {
     let token = this.text.charCodeAt(this.pos)
     while (token === Chars.space || token === Chars.tab) {
-      this.pos++;
-
-      token = this.text.charCodeAt(this.pos)
+      token = this.text.charCodeAt(++this.pos)
     }
   }
 
-  // starting at pos, returns the string, not that it matters.
-  scanString() {
-    return 'TODO'
+  // advance until we find the first unescaped single quote.
+  // edge case empty string.
+  scanString(): string {
+    const start = this.pos
+    let ch = this.text.charCodeAt(this.pos)
+    while (true) {
+
+      if (ch === Chars.singleQuote) {
+        if (this.peek() === Chars.singleQuote) {
+          // escaped: we're still in the string boys
+          this.pos++;
+        } else break;
+      }
+
+      ch = this.text.charCodeAt(++this.pos)
+    }
+
+    return this.text.substr(start, this.pos - 1)
   }
 
   scanVariable() {
 
   }
 
-  scanIdentifier() {
+  // a.b.c
+  scanDottedIdentifier() {
 
   }
 
@@ -61,6 +88,21 @@ export class Scanner {
 
   scanBlockComment() {
 
+  }
+
+  /**
+   * Some_Consecutive_Name1
+   */
+  scanIdentifier(): string {
+    const start = this.pos;
+    let ch = this.text.charCodeAt(this.pos)
+    while (isLetter(ch) || isDigit(ch) || ch === Chars.underscore) {
+      this.pos++
+
+      ch = this.text.charCodeAt(this.pos)
+    }
+
+    return this.text.substr(start, this.pos - start)
   }
 
   private peek(): number {
@@ -71,13 +113,12 @@ export class Scanner {
 
   scanInlineComment() {
     const start = this.pos
-    let ch = -1
-    // doesn't count as a statement. might not even emit it.
     while (this.pos < this.len) {
-      ch = this.text.charCodeAt(this.pos)
+      const ch = this.text.charCodeAt(this.pos)
 
       if (ch === Chars.newline) {
-        return this.text.substring(start, this.pos)
+        // todo: skip trivia?
+        return this.text.substr(start, this.pos - start)
       }
 
       this.pos++
@@ -85,30 +126,59 @@ export class Scanner {
 
     return ''
   }
- 
+
   scanNumber(): Number {
     const start = this.pos;
     while (isDigit(this.text.charCodeAt(this.pos))) this.pos++;
+
     if (this.text.charCodeAt(this.pos) === Chars.period) {
-        this.pos++;
-        while (isDigit(this.text.charCodeAt(this.pos))) this.pos++;
+      this.pos++;
+      while (isDigit(this.text.charCodeAt(this.pos))) this.pos++;
     }
 
-    return parseFloat(this.text.substr(start, this.pos)
+    return parseFloat(this.text.substr(start, this.pos - start))
   }
 
   scan(): Token {
+    const start = this.pos
 
-    // wheeeee
     while (true) {
-       const ch = this.text.charCodeAt(this.pos);
+      const ch = this.text.charCodeAt(this.pos);
+      let val = undefined;
 
-       switch (ch) {
+      switch (ch) {
         case Chars.newline:
-          // todo: let the scanner push a newline into the map?
-          // seems good.
-          break;
+          this.pushLine()
+          // skip trivia?
+          return {
+            start: start,
+            end: this.pos,
+            kind: SyntaxKind.newline
+          }
 
+        case Chars.hyphen:
+          if (this.peek() === Chars.hyphen) {
+            this.scanInlineComment()
+          } else {
+            // subtraction binary expression?
+          }
+
+        case Chars.tab:
+        case Chars.space:
+          this.pos++
+          while (true) {
+            const ch = this.text.charCodeAt(this.pos);
+            if (ch !== Chars.tab || ch !== Chars.space) break;
+            this.pos++;
+          }
+
+          return {
+            start: start,
+            end: this.pos,
+            kind: SyntaxKind.whitespace
+          }
+        // TODO: it could be a hex literal
+        // mysql supports those.
         case Chars.num_0:
         case Chars.num_1:
         case Chars.num_2:
@@ -119,22 +189,63 @@ export class Scanner {
         case Chars.num_7:
         case Chars.num_8:
         case Chars.num_9:
-          const val = this.scanNumber();
+          val = this.scanNumber();
+
           return {
+            start: start,
+            end: this.pos,
             value: val,
             kind: SyntaxKind.numeric_literal
           };
-       }
 
-       // todo: each thing should return when it finds a token.
-       break;
+        // case Chars.x:
+        // case Chars.X:
+        //   // todo: mysql hex literal X'
+
+        // case Chars.N // begin nvarchar literal.
+
+        case Chars.singleQuote:
+          val = this.scanString()
+
+          return new Token(SyntaxKind.string_literal, start, this.pos)
+        case Chars.doubleQuote:
+          // todo: quoted identifier
+          //
+          break;
+        case Chars.at:
+          if (this.peek() === Chars.at) {
+            // parse config function
+            this.pos++;
+
+            // todo: parse config function.
+          } else {
+            val = this.scanIdentifier()
+
+            return {
+              kind: SyntaxKind.local_variable_reference,
+              start: start,
+              end: this.pos,
+              value: val
+            }
+          }
+          // is it atat?
+          // or a local?
+
+        case Chars.hash:
+          // I believe temp
+
+
+        default: {
+          const identifier = this.scanIdentifier()
+          const keyword = keywords.get(identifier)
+          
+        }
+      }
+
+      // todo: each thing should return when it finds a token.
+      break;
     }
 
-
-
-
-
-
-    return SyntaxKind.Unknown;
+    return new Token(SyntaxKind.unknown, start, this.pos);
   }
 }
