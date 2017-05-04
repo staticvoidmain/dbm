@@ -7,7 +7,7 @@ import { exec } from 'child_process'
 
 describe('MicrosoftSql', function () {
 
-  function run(shell) : Promise<string> {
+  function run(shell): Promise<string> {
     return new Promise(function(resolve, reject) {
       exec(shell, function(err, stdout, stderr) {
         if (err) return reject(err);
@@ -18,13 +18,11 @@ describe('MicrosoftSql', function () {
   }
 
   before(() => {
-    return run("SqlLocalDB.exe create spec -s")
+    return run('SqlLocalDB.exe create spec -s')
       .then(() => {
-        return run("SqlLocalDB.exe info spec")
+        return run('SqlLocalDB.exe info spec')
           .then(function (output) {
-             let pipe = /Instance pipe name: .*/g.exec(output)
-
-             let query = `sqlcmd -S ${pipe} -Q "create logon ross with password='abc123'; create user ross; go;`
+             const query = `sqlcmd -S (localdb)\spec -Q "create logon ross with password='abc123'; create user ross; go;`
 
              return exec(query)
           })
@@ -32,15 +30,15 @@ describe('MicrosoftSql', function () {
   })
 
   after(function() {
-    return run("SqlLocalDB.exe stop spec")
+    return run('SqlLocalDB.exe stop spec')
       .then(() => {
-        return run("SqlLocalDB.exe delete spec")
+        return run('SqlLocalDB.exe delete spec')
       })
   })
 
   // todo: this named pipe thing needs to be configured.
-  let db = new MicrosoftSql({
-    host: 'np:\\.\pipe\LOCALDB#SH048D43\tsql\query',
+  const db = new MicrosoftSql({
+    host: '(localdb)\\spec',
     name: 'ross',
     user: 'sql_pg',
     password: 'abc123'
@@ -97,7 +95,7 @@ describe('MicrosoftSql', function () {
   })
 
   xit('can dump the keys of a database', function () {
-   
+
   })
 
   it('can dump tables', function () {

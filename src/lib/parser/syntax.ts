@@ -52,6 +52,7 @@ export const enum SyntaxKind {
   miscKeyword, // to sneak around the pgsql/mssql/mysql diffs
 
   // expressions
+  blockComment,
   select_expession,
   into_expression,
   from_clause,

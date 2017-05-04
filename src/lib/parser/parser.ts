@@ -4,7 +4,10 @@
 import { Scanner } from './scanner'
 import { Chars } from './keys'
 import { SyntaxKind } from './syntax';
-import { SyntaxNode } from './ast'
+import {
+  SyntaxNode,
+  SelectNode,
+} from './ast'
 
 // todo: map these to syntaxkinds, and all the other crazy unsupported
 // keywords just map to SyntaxKind.miscKeyword
@@ -59,19 +62,10 @@ export class Parser {
         case SyntaxKind.use:
         // todo: parse the database if this is mssql.
         case SyntaxKind.declare:
-          this.scanner.scanVariableDeclarationList()
-        // todo: declare some locals
+          this.parseVariableDeclarationList()
 
         case SyntaxKind.select:
-          // todo: perhaps this is too complex for the scanner... we don't have a terminal
-          // to know when we're done scanning.
-          this.scanner.scanSelectColumnList()
-          let fromOrInto = this.expect(SyntaxKind.from_clause | SyntaxKind.into_expression)
-          if (fromOrInto.kind === SyntaxKind.into_expression) {
-
-          }
-
-
+          this.parseSelect()
         case SyntaxKind.insert:
           // todo: insert into X values (xyz)
           // todo: insert X select Y from Z
@@ -86,19 +80,45 @@ export class Parser {
     }
   }
 
-  private expect(kind: SyntaxKind) {
+  private parseColumnList() {
+    return undefined
+  }
+
+  private parseVariableDeclarationList() {
+    // todo: expect @s and all that shiz
+  }
+
+  private parseExpected(kind: SyntaxKind) {
     const next = this.scanner.scan();
     if (next.kind !== kind) {
       // error?
     }
   }
-  private expect(kind: SyntaxKind) {
+  private parseOptional(kind: SyntaxKind) {
     const next = this.scanner.scan();
     if (next.kind !== kind) {
       // error?
     }
   }
 
+  private parseSelect() {
+    const node = <SelectNode>{
+      start: this.scanner.pos,
+      kind: SyntaxKind.select_expession
+    }
+    // todo: perhaps this is too complex for the scanner... we don't have a terminal
+    // to know when we're done scanning.
+    node.columns = this.parseColumnList()
+    node.into = this.parseOptional(SyntaxKind.into_expression)
+    node.from = this.parseExpected(SyntaxKind.from_clause)
+    // optional bits... todo
+    node.where = this.parseOptional(SyntaxKind.where_clause)
+    node.group_by = this.parseOptional(SyntaxKind.group_by)
+    node.order_by = this.parseOptional(SyntaxKind.order_by)
+    node.having = this.parseOptional(SyntaxKind.having_clause)
+
+    return node
+  }
 
 
   /**

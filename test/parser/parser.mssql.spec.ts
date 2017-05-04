@@ -1,32 +1,29 @@
-import {Parser} from '../../src/lib/parser'
-import {syntax, types} from '../../src/lib/syntax'
+import { } from 'mocha'
 import {expect} from 'chai'
 
+import {Parser} from '../../src/lib/parser/parser'
+import {SyntaxKind} from '../../src/lib/parser/syntax'
+
 describe('a statement parser', function () {
-  // todo: model all the lovely options.
-  var parser = new Parser({
-    vendor: 'mssql',
-    separator: 'GO'
-  })
+  const parser = new Parser()
 
-  // TODO: parse things like blocks in addition to statements.
   xit('returns an array of statements', function () {
-    var statements = parser.parse('use MyDb; go; select 1 + 1')
+    const tree = parser.parse('use MyDb; go; select 1 + 1', { name: 'test.sql' })
 
-    expect(statements).to.be.an('array')
-    expect(statements.length).to.equal(3)
+    expect(tree).to.be.an('array')
+    expect(tree.nodes.length).to.equal(3)
   })
 
   xit('ignores single-line comments', function () {
-    var statements = parser.parse('-- header information \nselect * from mytable;')
+    const tree = parser.parse('-- header information \nselect * from mytable;', { name: 'test.sql', ignoreTrivia: true })
 
-    expect(statements.length).to.equal(1)
+    expect(tree.nodes.length).to.equal(1)
   })
 
   xit('ignores block comments', function () {
-    var statements = parser.parse('/* header information */ select * from mytable;')
+    const tree = parser.parse('/* header information */ select * from mytable;', { name: 'test.sql', ignoreTrivia: true })
 
-    expect(statements.length).to.equal(1)
-    expect(statements[0].type).to.equal(types.statement.select)
+    expect(tree.nodes.length).to.equal(1)
+    expect(tree[0].type).to.equal(SyntaxKind.select_expession)
   })
 })

@@ -96,7 +96,7 @@ export class Scanner {
   scanIdentifier(): string {
     const start = this.pos;
     let ch = this.text.charCodeAt(this.pos)
-    while (isLetter(ch) || isDigit(ch) || ch === Chars.underscore) {
+    while (this.pos < this.len && isLetter(ch) || isDigit(ch) || ch === Chars.underscore) {
       this.pos++
 
       ch = this.text.charCodeAt(this.pos)
@@ -111,13 +111,12 @@ export class Scanner {
     return this.text.charCodeAt(this.pos + 1)
   }
 
-  scanInlineComment() {
+  private scanInlineComment() {
     const start = this.pos
     while (this.pos < this.len) {
       const ch = this.text.charCodeAt(this.pos)
 
       if (ch === Chars.newline) {
-        // todo: skip trivia?
         return this.text.substr(start, this.pos - start)
       }
 
@@ -177,8 +176,7 @@ export class Scanner {
             end: this.pos,
             kind: SyntaxKind.whitespace
           }
-        // TODO: it could be a hex literal
-        // mysql supports those.
+
         case Chars.num_0:
         case Chars.num_1:
         case Chars.num_2:
@@ -209,9 +207,8 @@ export class Scanner {
 
           return new Token(SyntaxKind.string_literal, start, this.pos)
         case Chars.doubleQuote:
-          // todo: quoted identifier
-          //
-          break;
+          // todo: quoted identifiers are funky.
+          return new Token(SyntaxKind.quoted_identifier, start, this.pos)
         case Chars.at:
           if (this.peek() === Chars.at) {
             // parse config function
@@ -232,13 +229,13 @@ export class Scanner {
           // or a local?
 
         case Chars.hash:
-          // I believe temp
-
+          if (this.peek() === Chars.hash) {
+            // mssql persistent temp tables.
+          }
 
         default: {
           const identifier = this.scanIdentifier()
           const keyword = keywords.get(identifier)
-          
         }
       }
 
