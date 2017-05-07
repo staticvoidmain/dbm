@@ -1,6 +1,6 @@
 
 import * as blessed from 'blessed'
-import { MigrationDocument, testFileExtension } from "../tasks/migration/document";
+import { MigrationDocument, testFileExtension } from '../tasks/migration/document';
 
 import {
   stat,
@@ -14,9 +14,9 @@ import * as yaml from 'js-yaml'
 import * as emphasize from 'emphasize'
 
 export function show (app) {
-    var screen = app.screen()
+    let screen = app.screen()
     // this is annoying...
-    var input = blessed.textbox({
+    let input = blessed.textbox({
       parent: screen,
       top: 2,
       left: 0,
@@ -27,7 +27,7 @@ export function show (app) {
       hidden: true
     })
 
-    var msg = blessed.message({
+    let msg = blessed.message({
       parent: screen,
       border: 'line',
       height: 'shrink',
@@ -41,7 +41,7 @@ export function show (app) {
     })
 
     // todo: file manager with a path, to support network drives and such
-    var fm = blessed.filemanager({
+    let fm = blessed.filemanager({
       parent: screen,
       border: 'line',
       style: {
@@ -67,13 +67,13 @@ export function show (app) {
           input.hide()
           screen.restoreFocus()
           if (err) return
-          return callback(null, value)
+          return callback(err, value)
         })
         screen.render()
       }
     })
 
-    var preview = blessed.scrollablebox({
+    const preview = blessed.scrollablebox({
       parent: screen,
       tags: true,
       border: 'line',
@@ -89,8 +89,8 @@ export function show (app) {
     })
 
     function onSelectedItemChange (item) {
-      let value = blessed.helpers.cleanTags(item.content)
-      let file = path.resolve(fm.cwd, value)
+      const value = blessed.helpers.cleanTags(item.content)
+      const file = path.resolve(fm.cwd, value)
 
       stat(file, function (err, stat) {
         if (err) {
@@ -98,11 +98,11 @@ export function show (app) {
         }
 
         if (!stat.isDirectory()) {
-          let test = testFileExtension(value)
+          const test = testFileExtension(value)
 
           if (test.isYaml || test.isJson) {
-            let content = readFileSync(file, 'utf8')
-            let formatted = test.isYaml
+            const content = readFileSync(file, 'utf8')
+            const formatted = test.isYaml
               ? emphasize.highlight('yaml', content)
               : emphasize.highlight('json', content)
 
@@ -119,10 +119,10 @@ export function show (app) {
 
     fm.on('file', function (file) {
 
-      let doc: MigrationDocument = null
+      let doc: MigrationDocument
 
       try {
-        doc = new MigrationDocument(file)         
+        doc = new MigrationDocument(file)
       } catch (ex) {
         msg.error(ex)
         return

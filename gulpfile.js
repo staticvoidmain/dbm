@@ -1,7 +1,5 @@
 var gulp = require('gulp')
 var tsc = require('gulp-typescript')
-
-// I think we already have rimraf in the tree.
 var del = require('del')
 
 gulp.task('default', function () {

@@ -1,5 +1,5 @@
 import * as blessed from 'blessed'
-import { MigrationDocument, testFileExtension } from "../tasks/migration/document";
+import { MigrationDocument, testFileExtension } from '../tasks/migration/document';
 
 import {
   stat,
@@ -8,13 +8,13 @@ import {
 
 import * as yaml from 'js-yaml'
 import * as emphasize from 'emphasize'
-import { join } from "path";
-import { EnvironmentConfig } from "../lib/environment";
+import { join } from 'path';
+import { EnvironmentConfig } from '../lib/environment';
 
 export function show(app, onServerSelected) {
-  let screen = app.screen()
+  const screen = app.screen()
 
-  let list = blessed.listtable({
+  const list = blessed.listtable({
     parent: screen,
     style: app.styles.listtable,
     label: 'Objects',
@@ -28,14 +28,14 @@ export function show(app, onServerSelected) {
     height: '70%',
   })
 
-  let home = process.env.DBM_HOME
-  let config = new EnvironmentConfig(join(home, 'hosts.yml'))
+  const home = process.env.DBM_HOME
+  const config = new EnvironmentConfig(join(home, 'hosts.yml'))
 
-  let data = [
+  const data = [
     ['tier', 'name', 'vendor', 'host']
   ]
-  
-  for (let server of config.servers()) {
+
+  for (const server of config.servers()) {
     data.push([
       server.tier,
       server.name,
@@ -46,8 +46,8 @@ export function show(app, onServerSelected) {
 
   // tier, then by name
   data.sort(function(a: Array<any>, b: Array<any>) {
-    let tier = a[0] - b[0]
-    let name = a[1] - b[1]
+    const tier = a[0] - b[0]
+    const name = a[1] - b[1]
 
     return tier * 2 + name
   })

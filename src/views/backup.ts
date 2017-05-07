@@ -9,15 +9,15 @@ import { create } from '../lib/database.js'
 const check = 'Y'
 
 export function show(app, server) {
-  let self = this
-  let flags = []
-  let screen = app.screen({
+  const self = this
+  const flags = []
+  const screen = app.screen({
     height: '100%',
     width: '100%'
   })
 
   // todo: form for all my lovely config options.
-  let objects = blessed.listtable({
+  const objects = blessed.listtable({
     label: 'Objects',
     hidden: true,
     parent: screen,
@@ -31,7 +31,7 @@ export function show(app, server) {
     style: app.styles.listtable
   })
 
-  var msg = blessed.message({
+  const msg = blessed.message({
     parent: screen,
     border: 'line',
     height: 'shrink',
@@ -44,15 +44,15 @@ export function show(app, server) {
     hidden: true
   })
 
-  var db = create(server)
+  const db = create(server)
 
   db.on('error', function (err) {
     msg.error(err)
   })
 
   objects.on('action', function (item) {
-    let i = objects.getItemIndex(item)
-    let line = self.data[i]
+    const i = objects.getItemIndex(item)
+    const line = self.data[i]
 
     if (line[1] === check) {
       line[0] = line[1] = 'N'
@@ -62,13 +62,13 @@ export function show(app, server) {
       line[0] = check
     }
 
-    var selected = objects.selected
+    const selected = objects.selected
     objects.setData(self.data)
     objects.select(selected)
     screen.render()
   })
 
-  var backup = new BackupRunner(app.env)
+  const backup = new BackupRunner(app.env)
 
   backup.on('log', function () {
     // todo: do some stuff.
@@ -77,7 +77,7 @@ export function show(app, server) {
   backup.on('error', (err) => msg.error(err))
   backup.on('done', () => msg.log('backup complete!'))
 
-  let configuration = blessed.form({
+  const configuration = blessed.form({
     shadow: true,
     label: 'Backup Config',
     keys: true,
@@ -104,7 +104,7 @@ export function show(app, server) {
     right: 4
   })
 
-  var backupPath = blessed.textbox({
+  const backupPath = blessed.textbox({
     parent: configuration,
     height: 1,
     name: 'backupPath',
@@ -124,7 +124,7 @@ export function show(app, server) {
     right: 4
   })
 
-  var backupName = blessed.textbox({
+  const backupName = blessed.textbox({
     parent: configuration,
     height: 1,
     style: { bg: 'white', fg: 'black' },
@@ -134,7 +134,7 @@ export function show(app, server) {
     right: 4
   })
 
-  let scriptPerObject = blessed.checkbox({
+  const scriptPerObject = blessed.checkbox({
     tags: true,
     keys: true,
     height: 1,
@@ -146,7 +146,7 @@ export function show(app, server) {
     left: 4
   })
 
-  let safe = blessed.checkbox({
+  const safe = blessed.checkbox({
     tags: true,
     keys: true,
     height: 1,
@@ -158,7 +158,7 @@ export function show(app, server) {
     left: 25
   })
 
-  let tip = blessed.box({
+  const tip = blessed.box({
     padding: 2,
     left: 4,
     right: 4,
@@ -178,9 +178,9 @@ export function show(app, server) {
   backupPath.value = process.env.DBM_HOME
   backupName.value = 'backup.sql'
 
-  let lastFocusedElement = null
+  const lastFocusedElement = undefined
 
-  let settingInfo = {
+  const settingInfo = {
     'safe': 'Render the create script with an "IF EXISTS"',
     'scriptPerObject': 'Saves a separate file per object backed up, to the specified backup path.\nOverrides backup name.',
     'backupPath': 'Folder when saving the backup.',
@@ -204,9 +204,9 @@ export function show(app, server) {
         let data = self.data.slice(1)
 
         if (flags.length) {
-          for (let i = 0; i < data.length; data++) {
-            let row = data[i]
-            // this 
+          for (const i = 0; i < data.length; data++) {
+            const row = data[i]
+            // this
             if (row[0] === 'Y') {
               flags[i].include = true
 
@@ -236,7 +236,7 @@ export function show(app, server) {
 
   db.getSchema().then(function (schema) {
     self.schema = schema
-    let rows = [
+    const rows = [
       ['include', 'data', 'type', 'schema', 'name']
     ]
 

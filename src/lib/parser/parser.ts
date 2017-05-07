@@ -27,19 +27,24 @@ export class Parser {
       const token = this.scanner.scan()
 
       switch (token.kind) {
-        case SyntaxKind.use:
+        case SyntaxKind.useKeyword:
         // todo: parse the database if this is mssql.
-        case SyntaxKind.declare:
+        case SyntaxKind.declareKeyword:
           this.parseVariableDeclarationList()
 
-        case SyntaxKind.select:
+        case SyntaxKind.selectKeyword:
           this.parseSelect()
-        case SyntaxKind.insert:
+        case SyntaxKind.insertKeyword:
+          // mssql supports these two styles of insert (and probably more)
           // todo: insert into X values (xyz)
           // todo: insert X select Y from Z
-        case SyntaxKind.update:
-        case SyntaxKind.create:
-        case SyntaxKind.drop:
+
+        case SyntaxKind.updateKeyword:
+          // 
+
+
+        case SyntaxKind.createKeyword:
+        case SyntaxKind.dropKeyword:
 
         default:
           break

@@ -65,7 +65,7 @@ export function show() {
       }
     },
     screen: function (opt) {
-      let screen = blessed.screen(Object.assign({}, this.screen_settings, opt))
+      const screen = blessed.screen(Object.assign({}, this.screen_settings, opt))
 
       screen.key(['C-c'], () => {
         screen.destroy()

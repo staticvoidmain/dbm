@@ -6,6 +6,7 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
+        "outDir": "dist",
         "types" : [ "node", "core-js", "mocha" ]
     },
     "typeRoots": [ "node_modules/@types" ],

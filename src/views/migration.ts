@@ -12,10 +12,10 @@ const statusToColorMap = {
 }
 
 function formatStepString(step) {
-  let stepString = step.toString()
-  let color = statusToColorMap[step.status]
-  var start = ''
-  var end = ''
+  const stepString = step.toString()
+  const color = statusToColorMap[step.status]
+  let start = ''
+  let end = ''
 
   if (color) {
     start = `{${color}-bg}`
@@ -26,13 +26,14 @@ function formatStepString(step) {
 }
 
 export function show(app, doc) {
-  var screen = app.screen({
+  const screen = app.screen({
     width: '95%',
     height: '95%',
     border: 'line'
   })
 
-  var logger = blessed.log({
+  const logger = blessed.log({
+    label: 'output',
     parent: screen,
     width: '50%+1',
     height: '100%',
@@ -54,16 +55,16 @@ export function show(app, doc) {
     }
   })
 
-  var log = function (message) {
-    let d = new Date()
-    let date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
-    let time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
-    let ts = date + ' ' + time
+  const log = function (message) {
+    const d = new Date()
+    const date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear()
+    const time = d.getHours() + ':' + d.getMinutes() + ':' + d.getSeconds()
+    const ts = date + ' ' + time
 
     logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message)
   }
 
-  var runner = new MigrationRunner(doc, app.env)
+  const runner = new MigrationRunner(doc, app.env)
   log('Loaded migration: ' + doc.path)
 
   runner.on('log', log)
@@ -72,7 +73,7 @@ export function show(app, doc) {
   })
 
   runner.validate()
-  var steps = blessed.list({
+  const steps = blessed.list({
     label: 'steps',
     parent: screen,
     width: '50%',
@@ -85,12 +86,12 @@ export function show(app, doc) {
   })
 
   runner.on('step', function (step) {
-    let item = steps.items[step.i]
+    const item = steps.items[step.i]
     steps.setItem(item, formatStepString(step))
     screen.render()
   })
 
-  var bar = blessed.listbar({
+  const bar = blessed.listbar({
     parent: screen,
     autoCommandKeys: true,
     width: 'shrink',

@@ -87,7 +87,7 @@ SqlLocalDB.exe create marketing-dev
 SqlLocalDB.exe start marketing-dev
 SqlLocalDB.exe info marketing-dev
 
-sqlcmd -S np:\\.\pipe\SOME-PIPE-NAME-HERE\tsql\query -Q "create logon ross with password='abc123'; create user ross; go;"
+sqlcmd -S (localdb)\marketing-dev -Q "create logon ross with password='abc123'; create user ross; go;"
 
 ```
 
