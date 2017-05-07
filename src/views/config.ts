@@ -1,10 +1,10 @@
 import * as blessed from 'blessed'
 import { CredentialStore } from '../lib/credential-store'
 import { EnvironmentConfig } from '../lib/environment'
-import { join } from "path";
+import { join } from 'path';
 
 export function show (app) {
-  var screen = app.screen()
+  const screen = app.screen()
 
   const listTableOptions = {
     parent: screen,
@@ -15,20 +15,20 @@ export function show (app) {
     style: app.styles.listtable
   }
 
-  var servers = blessed.listtable(Object.assign({
-    label: "Environments",
+  const servers = blessed.listtable(Object.assign({
+    label: 'Environments',
     top: 5,
     left: '50%+1',
     width: '50%-2'
   }, listTableOptions))
-  
-  let config = new EnvironmentConfig(join(process.env.DBM_HOME, 'hosts.yml'))
 
-  let serverList = [
+  const config = new EnvironmentConfig(join(process.env.DBM_HOME, 'hosts.yml'))
+
+  const serverList = [
     ['tier', 'name', 'host', 'vendor']
   ]
 
-  for (let server of config.servers()) {
+  for (const server of config.servers()) {
     serverList.push([
       server.tier,
       server.name,
@@ -39,36 +39,36 @@ export function show (app) {
 
   servers.setData(serverList)
 
-  var credentials = blessed.listtable(Object.assign({
+  const credentials = blessed.listtable(Object.assign({
     label: 'Credentials',
     top: 5,
     left: 0,
     width: '50%-2'
   }, listTableOptions))
 
-  let store = new CredentialStore({
+  const store = new CredentialStore({
     location: process.cwd(),
     encrypted: false
   })
 
   // todo: apply passwords and such
   // todo: LISTBAR that controls what mini-view we see. pogchamp.
-  store.open("not_the_final_password")
+  store.open('not_the_final_password')
 
-  let all = store.getAll()
-  let data = []
-  
+  const all = store.getAll()
+  const data = []
+
   data.push(['path', 'password'])
 
-  for (let kvp of all) {
-    let [ path, value ] = kvp;
+  for (const kvp of all) {
+    const [ path, value ] = kvp;
 
     data.push([ path, value.password ])
   }
-  
+
   credentials.setData(data)
   credentials.show()
   credentials.focus()
-  
+
   screen.render()
 }

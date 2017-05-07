@@ -3,14 +3,6 @@ import * as menu from './menu'
 
 export function show() {
   const app = {
-    // todo: these are just temp settings
-    env: {
-      vendor: 'postgres',
-      host: 'localhost',
-      user: 'sql_pg',
-      password: 'abc123',
-      name: 'ross'
-    },
     screen_settings: {
       debug: true,
       cursor: {
@@ -19,7 +11,7 @@ export function show() {
         blink: true
       },
       /* not sure about these settings.. */
-      // dump: __dirname + '/logs/dbm.log',
+      dump: __dirname + '/logs/dbm.log',
       // terminal: 'xterm',
       // fullUnicode: true,
       // warnings: true,

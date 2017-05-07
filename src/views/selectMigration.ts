@@ -13,10 +13,10 @@ import * as path from 'path'
 import * as yaml from 'js-yaml'
 import * as emphasize from 'emphasize'
 
-export function show (app) {
-    let screen = app.screen()
+export function show (app, server) {
+    const screen = app.screen()
     // this is annoying...
-    let input = blessed.textbox({
+    const input = blessed.textbox({
       parent: screen,
       top: 2,
       left: 0,
@@ -27,7 +27,7 @@ export function show (app) {
       hidden: true
     })
 
-    let msg = blessed.message({
+    const msg = blessed.message({
       parent: screen,
       border: 'line',
       height: 'shrink',
@@ -41,7 +41,7 @@ export function show (app) {
     })
 
     // todo: file manager with a path, to support network drives and such
-    let fm = blessed.filemanager({
+    const fm = blessed.filemanager({
       parent: screen,
       border: 'line',
       style: {
@@ -128,7 +128,7 @@ export function show (app) {
         return
       }
 
-      showMigration(app, doc)
+      showMigration(app, doc, server)
       screen.destroy()
     })
 

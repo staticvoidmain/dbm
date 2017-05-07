@@ -1,5 +1,4 @@
 /*
-
   This screen handles some stuff.
 */
 import * as blessed from 'blessed'
@@ -25,7 +24,7 @@ function formatStepString(step) {
   return start + `${step.status} | ${stepString}` + end
 }
 
-export function show(app, doc) {
+export function show(app, doc, server) {
   const screen = app.screen({
     width: '95%',
     height: '95%',
@@ -64,7 +63,7 @@ export function show(app, doc) {
     logger.log('{yellow-fg}' + ts + '{/yellow-fg}: ' + message)
   }
 
-  const runner = new MigrationRunner(doc, app.env)
+  const runner = new MigrationRunner(doc, server)
   log('Loaded migration: ' + doc.path)
 
   runner.on('log', log)

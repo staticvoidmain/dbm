@@ -5,9 +5,9 @@ import * as main from './menu'
 export function show (app) {
   // todo: test out the "layout" instead of just a raw box.
   // but I'm not sure how to use it.
-  var screen = app.screen()
+  const screen = app.screen()
 
-  var menu = blessed.form({
+  const menu = blessed.form({
     parent: screen,
     label: 'login',
     left: 'center',
@@ -28,7 +28,7 @@ export function show (app) {
     content: '{bold}User Name:{/bold}'
   })
 
-  var user = blessed.textbox({
+  const user = blessed.textbox({
     parent: menu,
     height: 1,
     name: 'username',
@@ -48,7 +48,7 @@ export function show (app) {
     content: '{bold}Password:{/bold}'
   })
 
-  var password = blessed.textbox({
+  const password = blessed.textbox({
     parent: menu,
     height: 1,
     censor: true,
@@ -62,7 +62,7 @@ export function show (app) {
   user.on('focus', function () { user.readInput() })
   password.on('focus', function () { password.readInput() })
 
-  var submit = blessed.button({
+  const submit = blessed.button({
     parent: menu,
     mouse: true,
     keys: true,
@@ -78,7 +78,7 @@ export function show (app) {
     style: app.styles.button
   })
 
-  let showMenu = function () {
+  const showMenu = function () {
     // todo: stash login creds.
     // show the main menu, this can be bypassed maybe.
     main.show(app)
@@ -93,5 +93,3 @@ export function show (app) {
   user.focus()
   screen.render()
 }
-
-

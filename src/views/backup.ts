@@ -68,7 +68,7 @@ export function show(app, server) {
     screen.render()
   })
 
-  const backup = new BackupRunner(app.env)
+  const backup = new BackupRunner(server)
 
   backup.on('log', function () {
     // todo: do some stuff.

@@ -15,11 +15,11 @@ function isDigit(charCode): boolean {
  * though, realistically, that's probably going to happen.
  */
 export class Token {
-  start: Number
-  end: Number
+  start: number
+  end: number
   kind: SyntaxKind
   value?: any
-  flags?: Number
+  flags?: number
 
   constructor(kind, start, end) {
     this.kind = kind
@@ -187,25 +187,33 @@ const keywordMap = new Map<string, SyntaxKind>([
   [ 'with',              SyntaxKind.withKeyword ]
 ])
 
+// todo: more options.
+export interface ScannerOptions {
+  skipTrivia?: boolean
+}
+
 export class Scanner {
+  private line: number
+  // token start position
   private start: number
   private pos: number
-  private currentToken: Token
   private readonly options: any
   private readonly text: string
   private readonly len: number
   private readonly lines: Array<number>
 
-  constructor(text, options) {
+  constructor(text: string, options: ScannerOptions) {
     this.options = options
     this.text = text
     this.pos = 0
     this.len = text.length
+    // todo: create line map.
   }
 
-  // map of line endings
-  private pushLine() {
-    this.lines.push(this.pos)
+  getCurrentLine(): number {
+    // hehe, there isn't a binary search. 4head.
+    // this will sorta have to be the line map bit.
+    return -1
   }
 
   getTokenStart() {
@@ -239,19 +247,22 @@ export class Scanner {
     return this.text.substr(start, this.pos - 1)
   }
 
-  scanVariable() {
-
-  }
-
-  // a.b.c
+  // a.b.c.fk_fbab
   scanDottedIdentifier() {
+    const start = this.pos;
+    let ch = this.text.charCodeAt(this.pos)
+    while (this.pos < this.len) {
+      if ((isLetter(ch)
+        || isDigit(ch)
+        || ch === Chars.underscore
+        || ch === Chars.period)) break
 
-  }
+      this.pos++
 
-  // todo: scan block comment.
+      ch = this.text.charCodeAt(this.pos)
+    }
 
-  scanBlockComment() {
-
+    return this.text.substr(start, this.pos - start)
   }
 
   /**
@@ -281,13 +292,26 @@ export class Scanner {
       const ch = this.text.charCodeAt(this.pos)
 
       if (ch === Chars.newline) {
-        return this.text.substr(start, this.pos - start)
+        break;
       }
 
       this.pos++
     }
+  }
 
-    return ''
+  private scanBlockComment() {
+    const start = this.pos
+    let ch = this.text.charCodeAt(this.pos)
+
+    while (this.pos < this.len) {
+
+      if (ch === Chars.asterisk && this.peek() === Chars.forwardSlash) {
+        this.pos++;
+        break;
+      }
+
+      ch = this.text.charCodeAt(this.pos)
+    }
   }
 
   scanNumber(): Number {
@@ -310,22 +334,6 @@ export class Scanner {
       let val = undefined;
 
       switch (ch) {
-        case Chars.newline:
-          this.pushLine()
-          // skip trivia?
-          return {
-            start: start,
-            end: this.pos,
-            kind: SyntaxKind.newline
-          }
-
-        case Chars.hyphen:
-          if (this.peek() === Chars.hyphen) {
-            this.scanInlineComment()
-          } else {
-            // subtraction binary expression?
-          }
-
         case Chars.tab:
         case Chars.space:
           this.pos++
@@ -334,13 +342,19 @@ export class Scanner {
             if (ch !== Chars.tab || ch !== Chars.space) break;
             this.pos++;
           }
+          break;
 
-          return {
-            start: start,
-            end: this.pos,
-            kind: SyntaxKind.whitespace
+        case Chars.newline: this.pos++; break;
+
+        // we'll just eat trivia for now. There's no good reason to have it just yet.
+        // maybe someday if we care about indent rules or someshit.
+
+        case Chars.hyphen:
+          if (this.peek() === Chars.hyphen) {
+            this.scanInlineComment()
+          } else {
+            // subtraction binary expression?
           }
-
         case Chars.num_0:
         case Chars.num_1:
         case Chars.num_2:
@@ -359,12 +373,6 @@ export class Scanner {
             value: val,
             kind: SyntaxKind.numeric_literal
           };
-
-        // case Chars.x:
-        // case Chars.X:
-        //   // todo: mysql hex literal X'
-
-        // case Chars.N // begin nvarchar literal.
 
         case Chars.singleQuote:
           val = this.scanString()
@@ -398,6 +406,13 @@ export class Scanner {
           }
 
         default: {
+          // case Chars.x:
+          // case Chars.X:
+          //   // todo: mysql hex literal X'
+
+          // case Chars.N // begin nvarchar literal.
+
+
           const identifier = this.scanIdentifier()
           const keyword = keywordMap.get(identifier)
 

@@ -41,16 +41,17 @@ as many kinds of sql specifications as possible
       end_keyword
 */
 
-import { SyntaxKind } from './syntax'
+/*
+  TODO:
 
-export type LogicalOperator =
-  SyntaxKind.lessThan
-  | SyntaxKind.greaterThan
-  | SyntaxKind.lessThanEqual
-  | SyntaxKind.greaterThanEqual
-  | SyntaxKind.ltGt
-  | SyntaxKind.notEqual
-  | SyntaxKind.equal;
+  // todo: @x between a and b
+  // todo: @x like 'foo%'
+
+
+
+ */
+
+import { SyntaxKind } from './syntax'
 
 export interface TextRange {
   start: number
@@ -62,7 +63,11 @@ export interface SyntaxNode extends TextRange {
   parent?: Node
 }
 
-export interface Identitifier extends SyntaxNode {
+export interface DottedIdentifier extends Identifier {
+
+}
+
+export interface Identifier extends SyntaxNode {
   text: string
 }
 
@@ -91,8 +96,8 @@ export interface SelectNode extends SyntaxNode {
 export type ColumnNode = ColumnExpression | NamedColumn
 
 export interface NamedColumn extends SyntaxNode {
-  column: Identitifier
-  table?: Identitifier
+  column: Identifier // dotted?
+  table?: Identifier // dotted?
   alias?: string
 }
 
@@ -102,8 +107,32 @@ export interface ColumnExpression extends SyntaxNode {
 }
 
 export interface BinaryExpression extends SyntaxNode {
-
+  left: ValueExpression
+  op: BinaryOperator
+  right: ValueExpression
 }
+
+export interface EqualsOperator extends SyntaxNode { kind: SyntaxKind.equal }
+export interface NotEqualsOperator extends SyntaxNode { kind: SyntaxKind.notEqual }
+export interface OrOperator extends SyntaxNode { kind: SyntaxKind.orKeyword }
+export interface AndOperator extends SyntaxNode { kind: SyntaxKind.andKeyword }
+export interface GreaterThanOperator extends SyntaxNode { kind: SyntaxKind.greaterThan }
+export interface LessThanOperator extends SyntaxNode { kind: SyntaxKind.lessThan }
+export interface GreaterThanEqualOperator extends SyntaxNode { kind: SyntaxKind.greaterThanEqual }
+export interface LessThanEqualOperator extends SyntaxNode { kind: SyntaxKind.lessThanEqual }
+export interface LikeOperator extends SyntaxNode { kind: SyntaxKind.likeKeyword }
+export interface InOperator extends SyntaxNode { kind: SyntaxKind.inKeyword }
+
+export type BinaryOperator =
+  | EqualsOperator
+  | NotEqualsOperator
+  | OrOperator
+  | AndOperator
+  | GreaterThanOperator
+  | LessThanOperator
+  | GreaterThanEqualOperator
+  | LessThanEqualOperator
+  | LikeOperator
 
 // really just anything but BinaryExpr
 export type ValueExpression =
@@ -132,12 +161,11 @@ export interface FunctionExpression {
 
 
 export interface WhereClause extends SyntaxNode {
-  // predicate
+  predicate: BinaryExpression
 }
 
 export interface IntoClause extends SyntaxNode {
   target: Identifier
-  
 }
 
 export interface FromClause extends SyntaxNode {

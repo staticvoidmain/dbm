@@ -6,9 +6,9 @@ import { show as showMigrationSelect } from './selectMigration'
 import { show as showServerSelect } from './serverSelection'
 
 export function show(app) {
-  var screen = app.screen()
+  const screen = app.screen()
 
-  var menu = blessed.list({
+  const menu = blessed.list({
     parent: screen,
     label: 'Tasks',
     border: 'line',
@@ -32,16 +32,21 @@ export function show(app) {
 
   menu.on('action', function (item, i) {
     // todo: all of these are actually server-select first.
-    
+
     if (i === 0) {
 
-      showServerSelect(app, 
+      showServerSelect(app,
         (server) => showBackup(app, server))
-        
+
     } else if (i === 1) {
-      showMigrationSelect(app)
+      showServerSelect(app,
+        (server) => showMigrationSelect(app, server))
+
     } else if (i === 2) {
-      // todo
+      //  showServerSelect(app,
+      //   (server) => showAnalysis(app, server))
+
+
     } else if (i === 3) {
       // todo
     } else if (i === 4) {
