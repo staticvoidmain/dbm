@@ -22,18 +22,178 @@ export class Token {
   flags?: Number
 
   constructor(kind, start, end) {
-    this.kind = kind;
-    this.start = start;
-    this.end = end;
+    this.kind = kind
+    this.start = start
+    this.end = end
   }
 }
 
+const keywordMap = new Map<string, SyntaxKind>([
+  [ 'add',               SyntaxKind.addKeyword ],
+  [ 'all',               SyntaxKind.allKeyword ],
+  [ 'alter',             SyntaxKind.alterKeyword ],
+  [ 'and',               SyntaxKind.andKeyword ],
+  [ 'any',               SyntaxKind.anyKeyword ],
+  [ 'as',                SyntaxKind.asKeyword ],
+  [ 'asc',               SyntaxKind.ascKeyword ],
+  [ 'authorization',     SyntaxKind.authorizationKeyword ],
+  [ 'backup',            SyntaxKind.backupKeyword ],
+  [ 'begin',             SyntaxKind.beginKeyword ],
+  [ 'between',           SyntaxKind.betweenKeyword ],
+  [ 'break',             SyntaxKind.breakKeyword ],
+  [ 'by',                SyntaxKind.byKeyword ],
+  [ 'cascade',           SyntaxKind.cascadeKeyword ],
+  [ 'case',              SyntaxKind.caseKeyword ],
+  [ 'check',             SyntaxKind.checkKeyword ],
+  [ 'checkpoint',        SyntaxKind.checkpointKeyword ],
+  [ 'close',             SyntaxKind.closeKeyword ],
+  [ 'clustered',         SyntaxKind.clusteredKeyword ],
+  [ 'coalesce',          SyntaxKind.coalesceKeyword ],
+  [ 'collate',           SyntaxKind.collateKeyword ],
+  [ 'column',            SyntaxKind.columnKeyword ],
+  [ 'commit',            SyntaxKind.commitKeyword ],
+  [ 'compute',           SyntaxKind.computeKeyword ],
+  [ 'constraint',        SyntaxKind.constraintKeyword ],
+  [ 'contains',          SyntaxKind.containsKeyword ],
+  [ 'containstable',     SyntaxKind.containstableKeyword ],
+  [ 'continue',          SyntaxKind.continueKeyword ],
+  [ 'convert',           SyntaxKind.convertKeyword ],
+  [ 'create',            SyntaxKind.createKeyword ],
+  [ 'cross',             SyntaxKind.crossKeyword ],
+  [ 'current',           SyntaxKind.currentKeyword ],
+  [ 'current_date',      SyntaxKind.current_dateKeyword ],
+  [ 'current_time',      SyntaxKind.current_timeKeyword ],
+  [ 'current_timestamp', SyntaxKind.current_timestampKeyword ],
+  [ 'current_user',      SyntaxKind.current_userKeyword ],
+  [ 'cursor',            SyntaxKind.cursorKeyword ],
+  [ 'database',          SyntaxKind.databaseKeyword ],
+  [ 'dbcc',              SyntaxKind.dbccKeyword ],
+  [ 'deallocate',        SyntaxKind.deallocateKeyword ],
+  [ 'declare',           SyntaxKind.declareKeyword ],
+  [ 'default',           SyntaxKind.defaultKeyword ],
+  [ 'delete',            SyntaxKind.deleteKeyword ],
+  [ 'deny',              SyntaxKind.denyKeyword ],
+  [ 'desc',              SyntaxKind.descKeyword ],
+  [ 'disk',              SyntaxKind.diskKeyword ],
+  [ 'distinct',          SyntaxKind.distinctKeyword ],
+  [ 'distributed',       SyntaxKind.distributedKeyword ],
+  [ 'double',            SyntaxKind.doubleKeyword ],
+  [ 'drop',              SyntaxKind.dropKeyword ],
+  [ 'dump',              SyntaxKind.dumpKeyword ],
+  [ 'else',              SyntaxKind.elseKeyword ],
+  [ 'end',               SyntaxKind.endKeyword ],
+  [ 'errlvl',            SyntaxKind.errlvlKeyword ],
+  [ 'escape',            SyntaxKind.escapeKeyword ],
+  [ 'except',            SyntaxKind.exceptKeyword ],
+  [ 'exec',              SyntaxKind.execKeyword ],
+  [ 'execute',           SyntaxKind.executeKeyword ],
+  [ 'exists',            SyntaxKind.existsKeyword ],
+  [ 'exit',              SyntaxKind.exitKeyword ],
+  [ 'external',          SyntaxKind.externalKeyword ],
+  [ 'fetch',             SyntaxKind.fetchKeyword ],
+  [ 'file',              SyntaxKind.fileKeyword ],
+  [ 'fillfactor',        SyntaxKind.fillfactorKeyword ],
+  [ 'for',               SyntaxKind.forKeyword ],
+  [ 'foreign',           SyntaxKind.foreignKeyword ],
+  [ 'freetext',          SyntaxKind.freetextKeyword ],
+  [ 'freetexttable',     SyntaxKind.freetexttableKeyword ],
+  [ 'from',              SyntaxKind.fromKeyword ],
+  [ 'full',              SyntaxKind.fullKeyword ],
+  [ 'function',          SyntaxKind.functionKeyword ],
+  [ 'goto',              SyntaxKind.gotoKeyword ],
+  [ 'grant',             SyntaxKind.grantKeyword ],
+  [ 'group',             SyntaxKind.groupKeyword ],
+  [ 'having',            SyntaxKind.havingKeyword ],
+  [ 'holdlock',          SyntaxKind.holdlockKeyword ],
+  [ 'identity',          SyntaxKind.identityKeyword ],
+  [ 'identity_insert',   SyntaxKind.identity_insertKeyword ],
+  [ 'identitycol',       SyntaxKind.identitycolKeyword ],
+  [ 'if',                SyntaxKind.ifKeyword ],
+  [ 'in',                SyntaxKind.inKeyword ],
+  [ 'index',             SyntaxKind.indexKeyword ],
+  [ 'inner',             SyntaxKind.innerKeyword ],
+  [ 'insert',            SyntaxKind.insertKeyword ],
+  [ 'intersect',         SyntaxKind.intersectKeyword ],
+  [ 'into',              SyntaxKind.intoKeyword ],
+  [ 'is',                SyntaxKind.isKeyword ],
+  [ 'join',              SyntaxKind.joinKeyword ],
+  [ 'key',               SyntaxKind.keyKeyword ],
+  [ 'kill',              SyntaxKind.killKeyword ],
+  [ 'left',              SyntaxKind.leftKeyword ],
+  [ 'like',              SyntaxKind.likeKeyword ],
+  [ 'load',              SyntaxKind.loadKeyword ],
+  [ 'merge',             SyntaxKind.mergeKeyword ],
+  [ 'nocheck',           SyntaxKind.nocheckKeyword ],
+  [ 'nonclustered',      SyntaxKind.nonclusteredKeyword ],
+  [ 'not',               SyntaxKind.notKeyword ],
+  [ 'null',              SyntaxKind.nullKeyword ],
+  [ 'nullif',            SyntaxKind.nullifKeyword ],
+  [ 'of',                SyntaxKind.ofKeyword ],
+  [ 'off',               SyntaxKind.offKeyword ],
+  [ 'offsets',           SyntaxKind.offsetsKeyword ],
+  [ 'on',                SyntaxKind.onKeyword ],
+  [ 'open',              SyntaxKind.openKeyword ],
+  [ 'opendatasource',    SyntaxKind.opendatasourceKeyword ],
+  [ 'openquery',         SyntaxKind.openqueryKeyword ],
+  [ 'openrowset',        SyntaxKind.openrowsetKeyword ],
+  [ 'openxml',           SyntaxKind.openxmlKeyword ],
+  [ 'option',            SyntaxKind.optionKeyword ],
+  [ 'or',                SyntaxKind.orKeyword ],
+  [ 'order',             SyntaxKind.orderKeyword ],
+  [ 'outer',             SyntaxKind.outerKeyword ],
+  [ 'over',              SyntaxKind.overKeyword ],
+  [ 'percent',           SyntaxKind.percentKeyword ],
+  [ 'pivot',             SyntaxKind.pivotKeyword ],
+  [ 'plan',              SyntaxKind.planKeyword ],
+  [ 'precision',         SyntaxKind.precisionKeyword ],
+  [ 'primary',           SyntaxKind.primaryKeyword ],
+  [ 'print',             SyntaxKind.printKeyword ],
+  [ 'proc',              SyntaxKind.procKeyword ],
+  [ 'procedure',         SyntaxKind.procedureKeyword ],
+  [ 'public',            SyntaxKind.publicKeyword ],
+  [ 'raiserror',         SyntaxKind.raiserrorKeyword ],
+  [ 'read',              SyntaxKind.readKeyword ],
+  [ 'readtext',          SyntaxKind.readtextKeyword ],
+  [ 'reconfigure',       SyntaxKind.reconfigureKeyword ],
+  [ 'references',        SyntaxKind.referencesKeyword ],
+  [ 'replication',       SyntaxKind.replicationKeyword ],
+  [ 'restore',           SyntaxKind.restoreKeyword ],
+  [ 'restrict',          SyntaxKind.restrictKeyword ],
+  [ 'return',            SyntaxKind.returnKeyword ],
+  [ 'revert',            SyntaxKind.revertKeyword ],
+  [ 'revoke',            SyntaxKind.revokeKeyword ],
+  [ 'right',             SyntaxKind.rightKeyword ],
+  [ 'rollback',          SyntaxKind.rollbackKeyword ],
+  [ 'rowcount',          SyntaxKind.rowcountKeyword ],
+  [ 'rule',              SyntaxKind.ruleKeyword ],
+  [ 'save',              SyntaxKind.saveKeyword ],
+  [ 'schema',            SyntaxKind.schemaKeyword ],
+  [ 'select',            SyntaxKind.selectKeyword ],
+  [ 'set',               SyntaxKind.setKeyword ],
+  [ 'union',             SyntaxKind.unionKeyword ],
+  [ 'unique',            SyntaxKind.uniqueKeyword ],
+  [ 'unpivot',           SyntaxKind.unpivotKeyword ],
+  [ 'update',            SyntaxKind.updateKeyword ],
+  [ 'updatetext',        SyntaxKind.updatetextKeyword ],
+  [ 'use',               SyntaxKind.useKeyword ],
+  [ 'user',              SyntaxKind.userKeyword ],
+  [ 'values',            SyntaxKind.valuesKeyword ],
+  [ 'varying',           SyntaxKind.varyingKeyword ],
+  [ 'view',              SyntaxKind.viewKeyword ],
+  [ 'waitfor',           SyntaxKind.waitforKeyword ],
+  [ 'when',              SyntaxKind.whenKeyword ],
+  [ 'where',             SyntaxKind.whereKeyword ],
+  [ 'while',             SyntaxKind.whileKeyword ],
+  [ 'with',              SyntaxKind.withKeyword ]
+])
+
 export class Scanner {
-  private pos: number;
+  private start: number
+  private pos: number
   private currentToken: Token
-  private readonly options: any;
-  private readonly text: string;
-  private readonly len: number;
+  private readonly options: any
+  private readonly text: string
+  private readonly len: number
   private readonly lines: Array<number>
 
   constructor(text, options) {
@@ -46,6 +206,10 @@ export class Scanner {
   // map of line endings
   private pushLine() {
     this.lines.push(this.pos)
+  }
+
+  getTokenStart() {
+    return this.start
   }
 
   whitespace() {
@@ -139,7 +303,7 @@ export class Scanner {
   }
 
   scan(): Token {
-    const start = this.pos
+    const start = this.start = this.pos
 
     while (true) {
       const ch = this.text.charCodeAt(this.pos);
@@ -235,7 +399,18 @@ export class Scanner {
 
         default: {
           const identifier = this.scanIdentifier()
-          const keyword = keywords.get(identifier)
+          const keyword = keywordMap.get(identifier)
+
+          if (keyword) {
+            return {
+              kind: keyword,
+              start: start,
+              end: this.pos,
+              value: identifier
+            }
+          }
+
+          // else it's just an identifier.
         }
       }
 

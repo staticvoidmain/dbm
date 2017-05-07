@@ -18,13 +18,13 @@ const FILE_NAME = '.dbm-creds'
 const NEW_LINE = (process.platform === 'win32' ? '\r\n' : '\n')
 
 /**
- * 
+ *
  * @param stream a ReadableStream
  */
 function read(stream): Promise<string> {
 
   return new Promise(function (resolve, reject) {
-    let content = ""
+    let content = ''
 
     stream.on('data', (chunk) => {
       content += chunk;
@@ -39,17 +39,17 @@ function read(stream): Promise<string> {
 }
 
 function encrypt(text, password) {
-  let cipher = createCipher(ALGO, password)
+  const cipher = createCipher(ALGO, password)
 
-  var cryptoText = cipher.update(text, 'utf8', 'hex')
+  let cryptoText = cipher.update(text, 'utf8', 'hex')
   cryptoText += cipher.final('hex');
 
   return cryptoText;
 }
 
 function decipher(stream, password) {
-  let decipher = createDecipher(ALGO, password)
-  var text = decipher.update(text, 'hex', 'utf8')
+  const decipher = createDecipher(ALGO, password)
+  let text = decipher.update(stream, 'hex', 'utf8')
   text += decipher.final('utf8');
 
   return text;
@@ -65,9 +65,9 @@ export interface CredentialItem {
 
 /**
  * I'm not rolling my own crypto, don't panic. xD
- * 
+ *
  * This is really just a simple way to keep your credentials safe.
- * 
+ *
  * You can rotate the keys yourself from the console.
  */
 export class CredentialStore {
@@ -88,10 +88,10 @@ export class CredentialStore {
     this.credentials = new Map<string, CredentialItem>()
 
     // todo: we don't actually support encryption yet...
-    if (this.encrypted) throw Error("Not Supported")
-    
+    if (this.encrypted) throw Error('Not Supported')
+
     if (!opt.location) {
-      let store = join(process.env.DBM_HOME, FILE_NAME)
+      const store = join(process.env.DBM_HOME, FILE_NAME)
       if (existsSync(store)) {
         this.path = store;
       }
@@ -108,7 +108,7 @@ export class CredentialStore {
     if (!this.path) {
       this.new = true
 
-      let location = process.cwd()
+      const location = process.cwd()
       this.path = join(location, FILE_NAME)
 
       writeFileSync(this.path, '')
@@ -130,13 +130,13 @@ export class CredentialStore {
       text = decipher(text, phrase)
     }
 
-    let lines = text.split(NEW_LINE)
+    const lines = text.split(NEW_LINE)
 
     if (lines.length > 0) {
-      for (var i = 0; i < lines.length; i++) {
-        let line = lines[i];
-        let [path, password] = line.split(' ')
-        let [env, server, db, user] = path.split(PATH_DELIMITER)
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const [path, password] = line.split(' ')
+        const [env, server, db, user] = path.split(PATH_DELIMITER)
 
         this.credentials.set(path, {
           environment: env,
@@ -155,7 +155,7 @@ export class CredentialStore {
   // this actually allows the passphrase to be updated once the file has been opened
   // so that's a nice benefit.
   close(phrase?: string): Promise<any> {
-    ok(this.isOpen, "Credential store not open!")
+    ok(this.isOpen, 'Credential store not open!')
 
     // if this store hasn't been modified, then we don't need to flush to the file system.
     if (this.passPhrase === phrase && !this.modified) {
@@ -164,28 +164,28 @@ export class CredentialStore {
     }
 
     return new Promise((resolve, reject) => {
-      let output = createWriteStream(this.path, 'utf8')
+      const output = createWriteStream(this.path, 'utf8')
 
       output.on('error', (e) => { reject(e) })
       output.on('finish', () => { resolve() })
 
-      let lines = []
+      const lines = []
       this.credentials.forEach(function (item) {
-        let path = [
+        const path = [
           item.environment,
           item.server,
           item.database,
           item.user
         ].join(PATH_DELIMITER)
 
-        lines.push(path + " " + item.password)
+        lines.push(path + ' ' + item.password)
       })
 
-      let text = lines.join(NEW_LINE)
+      const text = lines.join(NEW_LINE)
 
       // there's still something screwy about this
       if (this.encrypted) {
-        let cipherText = encrypt(text, phrase || this.passPhrase)
+        const cipherText = encrypt(text, phrase || this.passPhrase)
         writeFileSync(this.path, cipherText)
       }
       else {
@@ -207,7 +207,7 @@ export class CredentialStore {
    * @param {String} path the path to fetch.
    */
   get(path) {
-    ok(this.isOpen, "Credential store not open!")
+    ok(this.isOpen, 'Credential store not open!')
 
     return this.credentials.get(path)
   }
@@ -221,11 +221,11 @@ export class CredentialStore {
     ok(path.indexOf(' ') === -1, 'path cannot contain spaces')
     ok(password.indexOf(' ') === -1, 'password cannot contain spaces')
 
-    let parts = path.split(PATH_DELIMITER);
+    const parts = path.split(PATH_DELIMITER);
 
     ok(parts.length === 4, 'Malformed path!')
 
-    let [env, server, db, user] = path
+    const [env, server, db, user] = path
 
     this.credentials.set(path, {
       environment: env,

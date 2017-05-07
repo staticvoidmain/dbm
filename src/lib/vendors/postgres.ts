@@ -1,10 +1,8 @@
-'use strict'
-
 import * as pg from 'pg'
 import * as sqlgen from 'sql'
 import { IManagedDatabase } from '../database'
-import { mergeResults } from "./common";
-import { EventEmitter } from "events";
+import { mergeResults } from './common';
+import { EventEmitter } from 'events';
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
@@ -12,7 +10,6 @@ export function create(database) {
   return new PostgresDb(database)
 }
 
-// was I using EventEmitter to fire off log messages?
 export class PostgresDb
 
   extends EventEmitter
@@ -69,7 +66,9 @@ export class PostgresDb
     return Promise.all([
       this.getAllTables(),
       this.getAllColumns(),
-      this.getKeys()
+      this.getKeys(),
+      // views
+      // procedures
     ]).then(mergeResults)
   }
 
@@ -78,9 +77,9 @@ export class PostgresDb
     return pg.connect(this.config)
       .then(function (client) {
 
-        let [schema, tableName] = name.split('.')
+        const [schema, tableName] = name.split('.')
 
-        let singleTable = tables
+        const singleTable = tables
           .select()
           .where(tables.schema.equals(schema)
             .and(tables.name.equals(tableName)))
@@ -99,8 +98,8 @@ export class PostgresDb
   getAllColumns() {
     return pg.connect(this.config)
       .then(function (client) {
-        let text = allColumnsQuery.text
-        let args = allColumnsQuery.values
+        const text = allColumnsQuery.text
+        const args = allColumnsQuery.values
 
         return client.query(text, args)
           .then(function (res) {
@@ -124,8 +123,8 @@ export class PostgresDb
   getAllTables() {
     return pg.connect(this.config)
       .then(function (client) {
-        let text = userTablesQuery.text
-        let args = userTablesQuery.values
+        const text = userTablesQuery.text
+        const args = userTablesQuery.values
 
         return client.query(text, args)
           .then(function (res) {
@@ -210,12 +209,12 @@ SELECT
   pg_class.relname as tableName,
   pg_attribute.attname as keyType,
   indisprimary as isPrimaryKey
-FROM pg_index, pg_class, pg_attribute, pg_namespace 
+FROM pg_index, pg_class, pg_attribute, pg_namespace
 WHERE
   pg_namespace.nspname not like 'pg_%' AND
   pg_namespace.nspname <> 'information_schema' AND
-  pg_class.relnamespace = pg_namespace.oid AND 
-  pg_attribute.attrelid = pg_class.oid AND 
+  pg_class.relnamespace = pg_namespace.oid AND
+  pg_attribute.attrelid = pg_class.oid AND
   pg_attribute.attnum = any(pg_index.indkey) AND
   indrelid = pg_class.oid;
 `
@@ -253,7 +252,7 @@ const char = 'character'
 // todo: there are probably more like this
 function coerceColumnTypes(columns) {
   for (let i = 0; i < columns.length; i++) {
-    let col = columns[i]
+    const col = columns[i]
 
     switch (col.type) {
       case varchar:

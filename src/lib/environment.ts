@@ -8,7 +8,7 @@ hosts:
     marketing:
       vendor: postgres
       host: localhost
-    
+
     sales:
       vendor: sqlite3
       host: c:/dev/projects/dbm/test/sqlite.db
@@ -19,7 +19,7 @@ hosts:
       host: localhost
 
   prod:
-    marketing: 
+    marketing:
       vendor: postgres
       host: localhost
  */
@@ -37,16 +37,16 @@ export class EnvironmentConfig {
   constructor(file) {
     this.map = new Map<string, Server>()
 
-    let contents = readFileSync(file, 'utf8')
-    let temp = file.endsWith(".yml")
+    const contents = readFileSync(file, 'utf8')
+    const temp = file.endsWith('.yml')
       ? yaml.safeLoad(contents)
       : JSON.parse(contents)
 
-    for (let key in temp.hosts) {
-      let servers = temp.hosts[key];
+    for (const key in temp.hosts) {
+      const servers = temp.hosts[key];
 
-      for (let name in servers) {
-        let host = servers[name]
+      for (const name in servers) {
+        const host = servers[name]
         host.name = name
         host.tier = key
 
@@ -63,8 +63,8 @@ export class EnvironmentConfig {
   }
 
   servers(): Array<Server> {
-    let list = []
-    for (let x of this.map.values()) {
+    const list = []
+    for (const x of this.map.values()) {
       list.push(x)
     }
 

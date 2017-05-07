@@ -2,7 +2,7 @@
 import * as sqlgen from 'sql'
 
 import { IManagedDatabase } from '../database'
-import { EventEmitter } from "events";
+import { EventEmitter } from 'events';
 import { Database } from 'sqlite3'
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 
@@ -15,14 +15,17 @@ export function create(database) {
   return new SqliteDb(database)
 }
 
-// notes:
-// .bail on|off           Stop after hitting an error.  Default OFF
+/*
+notes:
+  .bail on|off           Stop after hitting an error.  Default OFF
+
+*/
 
 // interestingly, this already has the create script built in.
 const getAllTablesQuery = "select * from sqlite_master where type = 'table'"
 const getAllViews = "select * from sqlite_master where type = 'view'"
 
-// table-valued function versions added in SQLite version 3.16.0 
+// table-valued function versions added in SQLite version 3.16.0
 const fullSchema = `
  select * from
    sqlite_master AS m,
@@ -54,30 +57,39 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
   }
 
   getSingleTable(name) {
-
-    return new Promise(function(resolve, reject) {
-      let cb = function(err, rows) {
+    const getTableByName = "select * from sqlite_master where type = 'table' and name = ? limit 1";
+    return new Promise((resolve, reject) => {
+      const cb = (err, rows) => {
         if (err) return reject(err)
 
-        resolve(rows)
+        resolve(rows[0])
       }
 
-      this.db.run("select * from sqlite_master where type = 'table' and name = ?", [ name ], cb)
+      this.db.run(getTableByName, [ name ], cb)
+    })
+  }
+
+  getAllTables() {
+    return new Promise((resolve, reject) => {
+      this.db.run(getAllTablesQuery, [], (err, rows) => {
+        if (err) return reject(err);
+
+        resolve(rows);
+      });
     })
   }
 
   getSchema() {
     return Promise.all([
-      // this.getAllTables(),
+      this.getAllTables(),
+      this.getAllColumns(),
       // this.getAllViews(),
-      // this.getAllColumns()
     ]).then(mergeResults)
   }
 
   query(statement, args = []) {
-    let self = this
-    return new Promise(function (resolve, reject) {
-      self.db.run(statement, args, function (err, results) {
+    return new Promise((resolve, reject) => {
+      this.db.run(statement, args, function (err, results) {
         if (err) return reject(err)
 
         return resolve(results)
@@ -86,7 +98,8 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
   }
 
   run (statement, args = []) {
-    let self = this
+    // we need the scoped 'this' inside the promise.
+    const self = this
     return new Promise(function (resolve, reject) {
       self.db.run(statement, args, function (err) {
         if (err) return reject(err)
@@ -95,5 +108,5 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
         return resolve(this.changes)
       })
     })
-  } 
+  }
 }

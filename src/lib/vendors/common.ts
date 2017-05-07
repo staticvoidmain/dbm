@@ -2,31 +2,40 @@ export interface IDatabaseSchema {
   tables?: Array<any>
   procedures?: Array<any>
   views?: Array<any>
+  // todo: should keys be hoisted up like this, or part of the table?
   keys?: Array<any>
 }
 
-export function mergeResults(values) {
-  let [
+/**
+ * combines a set of promise results into a single result.
+ *
+ * @param values [ tables, columns, keys, views, procedures ]
+ * @returns combined database schema
+ */
+export function mergeResults(values): IDatabaseSchema {
+  const [
     tables,
     columns,
-    keys
+    keys,
+    views,
+    procedures
   ] = values;
 
-  let tableLookup = {}
+  const tableLookup = {}
 
   // todo: stitch together the keys.
   for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
-    let table = tables[tableIndex]
-    let key = table.schema + '.' + table.name
+    const table = tables[tableIndex]
+    const key = table.schema + '.' + table.name
 
     tableLookup[key] = table
     table.columns = []
   }
 
   for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-    let column = columns[columnIndex]
-    let key = column.tableSchema + '.' + column.tableName
-    let table = tableLookup[key]
+    const column = columns[columnIndex]
+    const key = column.tableSchema + '.' + column.tableName
+    const table = tableLookup[key]
 
     if (table) {
       table.columns.push(column)
@@ -35,8 +44,8 @@ export function mergeResults(values) {
 
   return {
     tables: tables,
-    procedures: null,
-    views: null,
+    procedures: procedures,
+    views: views,
     keys: keys
   }
 }
