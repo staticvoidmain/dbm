@@ -1,28 +1,6 @@
 
 import * as yaml from 'js-yaml'
 import { readFileSync } from 'fs'
-/*
----
-hosts:
-  dev:
-    marketing:
-      vendor: postgres
-      host: localhost
-
-    sales:
-      vendor: sqlite3
-      host: c:/dev/projects/dbm/test/sqlite.db
-
-  test:
-    marketing:
-      vendor: mssql
-      host: localhost
-
-  prod:
-    marketing:
-      vendor: postgres
-      host: localhost
- */
 
 export class Server {
   tier: string
@@ -31,6 +9,10 @@ export class Server {
   host: string
 }
 
+/**
+ * Environments can be configured using simple JSON / YML documents
+ * defining a heirarchy of tier/name/host-definition
+ */
 export class EnvironmentConfig {
   private map: Map<string, Server>
 
@@ -55,13 +37,18 @@ export class EnvironmentConfig {
     }
   }
 
-  // finds a host by a given "name"
-  // dev/marketing
-  // foo/bar
+  /**
+   * finds a host in the list of servers
+   *
+   * @param name The tier/name of the server ex: dev/marketing
+   */
   find(name): Server {
     return this.map.get(name)
   }
 
+  /**
+   * Gets a list of all servers contained in the environment config.
+   */
   servers(): Array<Server> {
     const list = []
     for (const x of this.map.values()) {

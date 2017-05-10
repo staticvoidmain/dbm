@@ -6,7 +6,7 @@ import { PostgresDb } from '../../src/lib/vendors/postgres'
 
 describe('PostgresDb', function () {
 
-  let db = new PostgresDb({
+  const db = new PostgresDb({
     host: 'localhost',
     name: 'ross',
     user: 'sql_pg',

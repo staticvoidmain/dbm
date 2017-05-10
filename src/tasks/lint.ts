@@ -82,7 +82,6 @@ function visit (node, kind, callback) {
     callback(node)
   }
 
-  // eslint seems to think this is correct, but I don't think it is.
   for (const child of node.children) {
     visit(child, kind, callback)
   }
@@ -101,16 +100,18 @@ export class Linter {
   }
 
   lint (script) {
-    const parser = new Parser({})
-    const statements = parser.parse(script)
+    const parser = new Parser()
+    const tree = parser.parse(script, {})
     const result = []
 
-    statements.forEach(function (statement) {
-      this.rules.forEach(function (enabled, rule) {
-        if (enabled) {
-          evaluate(rule, statement, result)
+    tree.nodes.forEach((statement) => {
+
+      for (const key in this.rules) {
+        const rule = this.rules[key]
+        if (rule) {
+          evaluate(key, statement, result)
         }
-      })
+      }
     })
 
     return result

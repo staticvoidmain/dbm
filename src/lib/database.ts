@@ -1,5 +1,5 @@
-import { IDatabaseSchema } from "./vendors/common";
-import { Server } from "./environment";
+import { IDatabaseSchema } from './vendors/common';
+import { Server } from './environment';
 
 /**
  * Represents a managed database controlled by DBM
@@ -9,7 +9,7 @@ export interface IManagedDatabase {
   run: (statement: string, args?: any) => Promise<any>
   query: (statement: string, args?: any) => Promise<any>
   getSchema: () => Promise<any> // todo: fix this to be a real schema object
-  
+
   // defines the batch separator (required)
   separator: string
   on(event: string | symbol, listener: Function): this;
@@ -17,8 +17,8 @@ export interface IManagedDatabase {
 
 // factory function to lazy-load the vendors
 export function create(server: Server): IManagedDatabase {
-  let module = require('./vendors/' + server.vendor)
-  let factory = module.create
+  const module = require('./vendors/' + server.vendor)
+  const factory = module.create
 
   return factory(server)
 }

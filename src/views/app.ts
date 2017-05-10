@@ -11,7 +11,6 @@ export function show() {
         blink: true
       },
       /* not sure about these settings.. */
-      dump: __dirname + '/logs/dbm.log',
       // terminal: 'xterm',
       // fullUnicode: true,
       // warnings: true,

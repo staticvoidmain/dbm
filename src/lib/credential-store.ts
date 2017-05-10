@@ -113,11 +113,13 @@ export class CredentialStore {
 
       writeFileSync(this.path, '')
     }
+
+    if (opt.open && !opt.encrypted) {
+      this.open('')
+    }
   }
 
   open(phrase) {
-    ok(phrase, 'passphrase is required')
-
     if (this.new) {
       this.isOpen = true
       this.passPhrase = phrase;
@@ -135,8 +137,8 @@ export class CredentialStore {
     if (lines.length > 0) {
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        const [path, password] = line.split(' ')
-        const [env, server, db, user] = path.split(PATH_DELIMITER)
+        const [path, user, password] = line.split(' ')
+        const [env, server, db] = path.split(PATH_DELIMITER)
 
         this.credentials.set(path, {
           environment: env,
@@ -174,22 +176,22 @@ export class CredentialStore {
         const path = [
           item.environment,
           item.server,
-          item.database,
-          item.user
+          item.database
         ].join(PATH_DELIMITER)
 
-        lines.push(path + ' ' + item.password)
+        lines.push(path + ` ${item.user} ${item.password}`)
       })
 
       const text = lines.join(NEW_LINE)
 
-      // there's still something screwy about this
+      // TODO: there's still something screwy about this.
+      // figure it out later and just use the creds as is
       if (this.encrypted) {
         const cipherText = encrypt(text, phrase || this.passPhrase)
-        writeFileSync(this.path, cipherText)
+        // writeFileSync(this.path, cipherText)
       }
       else {
-        writeFileSync(this.path, text)
+        // writeFileSync(this.path, text)
       }
 
       this.isOpen = false
@@ -202,7 +204,7 @@ export class CredentialStore {
   }
 
   /**
-   * Gets a stored credential by env/server/db/user from the credential store.
+   * Gets a stored credential by env/server/db from the credential store.
    * This value should be transparently passed to the server connection when connecting to that db.
    * @param {String} path the path to fetch.
    */
@@ -213,9 +215,9 @@ export class CredentialStore {
   }
 
   /**
-   * SETS the password for the given path to the new value.
+   * SETS the user-name and password for the given path to the new value.
    */
-  set(path, password) {
+  set(path, user, password) {
 
     ok(this.isOpen, 'Credential store not open!')
     ok(path.indexOf(' ') === -1, 'path cannot contain spaces')
@@ -223,9 +225,9 @@ export class CredentialStore {
 
     const parts = path.split(PATH_DELIMITER);
 
-    ok(parts.length === 4, 'Malformed path!')
+    ok(parts.length === 3, 'Malformed path!')
 
-    const [env, server, db, user] = path
+    const [env, server, db] = path
 
     this.credentials.set(path, {
       environment: env,
@@ -239,7 +241,7 @@ export class CredentialStore {
   }
 
   delete(path) {
-    // todo: support removing a key
+    // todo: support removing a key?
     this.modified = true
   }
 }

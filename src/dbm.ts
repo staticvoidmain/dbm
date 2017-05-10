@@ -206,7 +206,6 @@ const compare = (args) => {
   }
 }
 
-
 const optimize = (args) => {
   if (!args.length || args[0] === 'help') {
     die('dbm optimize some/data/path --config=basic_optimizations.yml --verbose')
@@ -302,6 +301,7 @@ if (process.argv.length <= 2) {
   hosts = new EnvironmentConfig(join(home, 'hosts.yml'))
 
   // todo: keep track of any of our promises outstanding.
+  // this is actually handled by the vscode debugger.
   const unhandledRejections = new Map();
 
   process.on('unhandledRejection', (reason, p) => {

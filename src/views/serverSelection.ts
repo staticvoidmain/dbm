@@ -1,5 +1,8 @@
 import * as blessed from 'blessed'
-import { MigrationDocument, testFileExtension } from '../tasks/migration/document';
+import {
+  MigrationDocument,
+  testFileExtension
+} from '../tasks/migration/document';
 
 import {
   stat,
@@ -10,6 +13,7 @@ import * as yaml from 'js-yaml'
 import * as emphasize from 'emphasize'
 import { join } from 'path';
 import { EnvironmentConfig } from '../lib/environment';
+import { CredentialStore } from "../lib/credential-store";
 
 export function show(app, onServerSelected) {
   const screen = app.screen()
@@ -18,7 +22,6 @@ export function show(app, onServerSelected) {
     parent: screen,
     style: app.styles.listtable,
     label: 'Objects',
-    hidden: true,
     top: 'center',
     left: 'center',
     align: 'center',
@@ -45,7 +48,7 @@ export function show(app, onServerSelected) {
   }
 
   // tier, then by name
-  data.sort(function(a: Array<any>, b: Array<any>) {
+  data.sort(function (a: Array<any>, b: Array<any>) {
     const tier = a[0] - b[0]
     const name = a[1] - b[1]
 
@@ -53,10 +56,20 @@ export function show(app, onServerSelected) {
   })
 
   list.setData(data)
+  list.focus()
+  list.on('action', function (item, i) {
+    const servers = config.servers()
+    const server = servers[i - 1]
 
-  // todo: read the hosts file.
-  // todo: show a listtable item for each element
-  // todo: on user selection invoke callback
+    const path = [server.tier, server.name].join('/')
+    const store = new CredentialStore({ encrypted: false, open: true });
+    const user = store.get(path)
+    // this also needs the permissions... so...
+    // any credential matching the server.tier/server.name?
 
-  screen.show()
+
+    onServerSelected()
+  })
+
+  screen.render()
 }

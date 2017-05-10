@@ -1,3 +1,6 @@
+// necessary to get ts to work nicely
+import { } from 'mocha'
+
 import { CredentialStore } from '../src/lib/credential-store'
 import { expect } from 'chai'
 import {
@@ -5,31 +8,28 @@ import {
   unlinkSync
 } from 'fs'
 
-// necessary to get ts to work nicely
-import { } from 'mocha'
-
 const isWindows = (process.platform === 'win32');
 
 function temp() {
   if (isWindows) {
-    return "c:/windows/temp/"
-  } else { return "/usr/temp/" }
+    return 'c:/windows/temp/'
+  } else { return '/usr/temp/' }
 }
 
 function cleanup() {
-  let file = temp() + ".dbm-creds"
+  const file = temp() + '.dbm-creds'
 
   if (existsSync(file)) {
     unlinkSync(file)
   }
 }
 
-describe("destructuring assignment", function () {
-  it("should look like this", function () {
-    let path = "one/two/three/four"
-    let [env, server, db, user] = path.split('/')
+describe('destructuring assignment', function () {
+  it('should look like this', function () {
+    const path = 'one/two/three'
+    const [env, server, db] = path.split('/')
 
-    expect(env && server && db && user).to.be.ok
+    expect(env && server && db).to.be.ok
   })
 })
 
@@ -46,7 +46,11 @@ describe('the credential store', () => {
 
   afterEach(cleanup)
 
-  describe("#open", () => {
+  describe('#ctor', () => {
+    // todo: describe the constructor behavior.
+  })
+
+  describe('#open', () => {
 
     describe('WHEN file does not exist', () => {
       it('should create a new store', () => {
@@ -56,7 +60,7 @@ describe('the credential store', () => {
     })
   })
 
-  describe("when unencrypted", function () {
+  describe('when unencrypted', function () {
 
     beforeEach(function () {
       store.open(phrase)
@@ -65,43 +69,44 @@ describe('the credential store', () => {
     describe('#set', () => {
 
       it('should support UPDATE', () => {
-        store.set('dev/marketing/ross/sql_pg', 'abc123');
-        store.set('dev/marketing/ross/sql_pg', 'LKJ#082=34mnsadf!')
+        store.set('dev/marketing/ross', 'sql_pg', 'abc123');
+        store.set('dev/marketing/ross', 'sql_pg', 'LKJ#082=34mnsadf!')
 
-        let item = store.get('dev/marketing/ross/sql_pg')
+        const item = store.get('dev/marketing/ross')
 
         expect(item.password).to.equal('LKJ#082=34mnsadf!')
       })
 
       it('should support multiple puts', () => {
         // note these are different environments
-        store.set('dev/marketing/ross/sql_pg', 'abc123')
-        store.set('test/marketing/ross/sql_pg', 'anotherpassword')
-        store.set('prod/marketing/ross/sql_pg', 'zz1!*&^H#*@B')
+        store.set('dev/marketing/ross', 'sql_pg', 'abc123')
+        store.set('test/marketing/ross', 'sql_pg', 'anotherpassword')
+        store.set('prod/marketing/ross', 'sql_pg', 'zz1!*&^H#*@B')
       })
     })
 
     describe('#get', () => {
 
       it('should return the Item on success', () => {
-        store.set('dev/marketing/ross/sql_pg', "somepass")
-        let item = store.get('dev/marketing/ross/sql_pg')
+        store.set('dev/marketing/ross', 'sql_pg', 'somepass')
+        const item = store.get('dev/marketing/ross')
 
         expect(item).not.to.be.undefined
+        expect(item.user).to.equal('sql_pg')
         expect(item.password).to.equal('somepass')
       })
     })
 
     describe('#round-trip', () => {
 
-      it("can write/read to the same file", function () {
+      it('can write/read to the same file', function () {
 
-        store.set('dev/marketing/ross/sql_pg', "somepass")
+        store.set('dev/marketing/ross', 'sql_pg', 'somepass')
 
         store.close()
         store.open(phrase)
 
-        let item = store.get('dev/marketing/ross/sql_pg')
+        const item = store.get('dev/marketing/ross/sql_pg')
         expect(item).not.to.be.undefined
         expect(item.password).to.equal('somepass')
       })
@@ -117,12 +122,12 @@ describe('the credential store', () => {
           location: temp()
         })
       })
-  
+
       it('throws on incorrect passphrase', () => {
         return store.open("correct passphrase")
           .then(() => store.close())
           .then(function() {
-            
+
             return store
               .open("THIS IS NOT THE PHRASE LUL")
               .catch((err) => {
@@ -130,37 +135,37 @@ describe('the credential store', () => {
               })
           })
       })
-  
+
       it('decrypts on correct passphrase', () => {
-        
+
         return store.open("correct passphrase")
-          .then(() => { 
+          .then(() => {
             store.set("foo/bar/baz/buzz", "test")
             store.close()
           })
           .then(function() {
-            
+
             return store
               .open("correct passphrase")
               .then(() => {
                 let res = store.get("foo/bar/baz/buzz")
-  
+
                 expect(res.password).to.equal('test')
               })
           })
       })
-  
+
       describe('#round-trip', () => {
-  
+
         it("can write/read to the same file", function () {
           let store = new CredentialStore({
             location: temp(),
             encrypted: true
           })
-  
+
           store.open("anything")
           store.set('dev/marketing/ross/sql_pg', "somepass")
-  
+
           return store.close()
             .then(() => store.open("anything"))
             .then(() => {

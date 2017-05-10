@@ -28,12 +28,14 @@ const getAllViews = "select * from sqlite_master where type = 'view'"
 // table-valued function versions added in SQLite version 3.16.0
 const fullSchema = `
  select * from
-   sqlite_master AS m,
-   pragma_table_info(m.name) as cols,
-   pragma_index_list(m.name) AS il
- where m.type = 'table';`
+   sqlite_master AS t,
+   pragma_table_info(t.name) as cols,
+   pragma_index_list(t.name) as indexes,
+   pragma_index_info(indexes.name) as index_info
+ where m.type = 'table'
+ order by 1;`
 
-const supportedEvents = [ 'trace', 'profile', 'insert', 'update', 'delete' ];
+// const supportedEvents = [ 'trace', 'profile', 'insert', 'update', 'delete' ];
 
 export class SqliteDb extends EventEmitter implements IManagedDatabase {
 
@@ -51,7 +53,6 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
     //   this.db.on(e, (args) => this.emit(e, args))
     // })
 
-    // todo: is it actually semicolon?
     this.separator = ';' + newline
     this.name = 'sqlite'
   }
@@ -82,7 +83,7 @@ export class SqliteDb extends EventEmitter implements IManagedDatabase {
   getSchema() {
     return Promise.all([
       this.getAllTables(),
-      this.getAllColumns(),
+      // this.getAllColumns(),
       // this.getAllViews(),
     ]).then(mergeResults)
   }
