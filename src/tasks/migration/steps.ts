@@ -9,12 +9,12 @@ export interface IObjectIdentifier {
 
   // if this is an index then it will have an object part.
   // not currently supported.
-  object?: string  
+  object?: string
 }
 
 // todo: support  things.
 // schema_name.obj_name.ix_some_name
-function identifier(id: string) : IObjectIdentifier {
+function identifier(id: string): IObjectIdentifier {
   let parts = id.split('.')
 
   if (parts.length > 1) {
@@ -104,6 +104,25 @@ class RunStep extends Step {
   }
 }
 
+/**
+ * This step kind allows us to completely drop ALL existing entities, keys, 
+ * without deleting the containing database.
+ */
+// class ResetDatabase extends Step {
+//   // except this doesn't work...
+
+    // the IDEA is that we can query each FK, drop it, then drop each table
+    // not sure why we don't just delete the whole database and recreate it...
+// }
+
+/**
+ * TODO: This isn't done yet but I'm kinda bored with it right now.
+ * usage:
+ *   drop.view: Foo.vw_Stuff
+ *   drop.procedure: Foo.pr_Stuff
+ *   drop.index: Foo.Bar.ix_Bazopple
+ *   drop.constraint: Foo.Bar.c_Bar_default
+ */
 class DropObject extends Step {
   ifExists: boolean
 
@@ -145,7 +164,6 @@ class DropObject extends Step {
       } else {
         // todo: not cross-vendor, or even very good.
         // the sqlgen instance should be able to do this...
-
         if (isObjectMember(this.type)) {
           let container = sqlgen.define({
             name: id.name.toLowerCase(),
@@ -168,14 +186,6 @@ class DropObject extends Step {
   }
 }
 
-/**
- * TODO: This isn't done yet but I'm kinda bored with it right now.
- * usage:
- *   drop.view: Foo.vw_Stuff
- *   drop.procedure: Foo.pr_Stuff
- *   drop.index: Foo.Bar.ix_Bazopple
- *   drop.constraint: Foo.Bar.c_Bar_default
- */
 class CreateObject extends Step {
   constructor(i, key, step) {
     let parts = key.split('.')
@@ -213,7 +223,7 @@ class DisableAccount extends Step {
 
     this.user = step[key]
   }
-  
+
   render(any: any): string {
     throw new Error('Method not implemented.');
   }
@@ -227,7 +237,7 @@ class EnableAccount extends Step {
 
     this.user = step[key]
   }
-  
+
   render(any: any): string {
     throw new Error('Method not implemented.');
   }
@@ -235,6 +245,10 @@ class EnableAccount extends Step {
 
 
 class BeginTransaction extends Step {
+  // TODO: support named transactions for 
+  // fine-grained control over the migration.
+  name: string
+
   constructor(i, key, step) {
     let parts = key.split('.')
     if (parts.length <= 1) {
@@ -251,12 +265,13 @@ class BeginTransaction extends Step {
   render(sqlgen) {
     // todo: we can get the... vendor out and do our own thing.
     // postgres is just BEGIN;
-    // mssql 
+    // mssql requires BEGIN TRAN;
 
     this.query = 'BEGIN;'
 
-    if (sqlgen.vendor)
+    if (sqlgen.vendor) {
 
+    }
 
     return this.query
   }

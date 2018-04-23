@@ -7,6 +7,7 @@ export class Server {
   vendor: string
   name: string
   host: string
+  security?: string
 }
 
 /**

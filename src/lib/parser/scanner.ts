@@ -207,7 +207,7 @@ export class Scanner {
     this.text = text
     this.pos = 0
     this.len = text.length
-    // todo: create line map.
+    this.lines  [];
   }
 
   getCurrentLine(): number {
@@ -338,8 +338,10 @@ export class Scanner {
         case Chars.space:
           this.pos++
           while (true) {
-            const ch = this.text.charCodeAt(this.pos);
-            if (ch !== Chars.tab || ch !== Chars.space) break;
+            const next = this.text.charCodeAt(this.pos);
+            if (next !== Chars.tab || next !== Chars.space) 
+              break;
+            
             this.pos++;
           }
           break;
@@ -354,6 +356,7 @@ export class Scanner {
             this.scanInlineComment()
           } else {
             // subtraction binary expression?
+            // negative number... speculative parse, go.
           }
         case Chars.num_0:
         case Chars.num_1:
@@ -384,9 +387,11 @@ export class Scanner {
         case Chars.at:
           if (this.peek() === Chars.at) {
             // parse config function
+            // ex: @@foo
             this.pos++;
+            this.scanIdentifier()
 
-            // todo: parse config function.
+            // asdfasdfasdf
           } else {
             val = this.scanIdentifier()
 
@@ -397,7 +402,6 @@ export class Scanner {
               value: val
             }
           }
-          // is it atat?
           // or a local?
 
         case Chars.hash:
@@ -405,14 +409,13 @@ export class Scanner {
             // mssql persistent temp tables.
           }
 
+        // case Chars.x:
+        // case Chars.X:
+        //   // todo: mysql hex literal X'
+
+        // case Chars.N // begin nvarchar literal.
+
         default: {
-          // case Chars.x:
-          // case Chars.X:
-          //   // todo: mysql hex literal X'
-
-          // case Chars.N // begin nvarchar literal.
-
-
           const identifier = this.scanIdentifier()
           const keyword = keywordMap.get(identifier)
 

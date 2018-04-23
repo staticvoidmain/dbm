@@ -11,6 +11,7 @@ export class IBackupOptions {
   backupPath?: string
   scriptPerObject?: boolean
   safe?: boolean
+  scriptData?: boolean
 }
 
 export class BackupRunner extends EventEmitter {
@@ -22,9 +23,7 @@ export class BackupRunner extends EventEmitter {
 
     this.sqlgen = sql.create(server.vendor, {})
     
-    // so... we create the db, just to get the separator...
-    // 4head
-    this.db = factory(server)
+    this.db = factory(server);
   }
 
   /**
@@ -84,15 +83,26 @@ export class BackupRunner extends EventEmitter {
           join(backupPath, backupName), text, 'utf8')
         
         this.emit('log', 'table: ' + table.schema + '.' + table.name)
+
+        // todo: script data?
       })
     }
 
     if (schema.views) {
-      // todo
+      schema.views.forEach(vw => {
+        if (options.scriptPerObject) {
+          backupName = vw.schema + '.' + vw.name + '.sql'
+        }
+      })
     }
 
     if (schema.procedures) {
-      
+      schema.procedures.forEach(proc => {
+        // todo: put them in folders?
+        if (options.scriptPerObject) {
+          backupName = proc.schema + '.' + proc.name + '.sql'
+        }
+      })
     }
 
     this.emit('done')

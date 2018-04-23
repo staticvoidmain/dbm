@@ -23,7 +23,7 @@ as many kinds of sql specifications as possible
       expression
         select_statement
           columns: [
-            select_all_columns
+            all_columns
           ]
         from_clause
           table_identity
@@ -46,7 +46,8 @@ as many kinds of sql specifications as possible
 
   // todo: @x between a and b
   // todo: @x like 'foo%'
-
+  // todo: @x is null
+  // todo: @x is not null
 
 
  */
@@ -64,7 +65,7 @@ export interface SyntaxNode extends TextRange {
 }
 
 export interface DottedIdentifier extends Identifier {
-
+  parts: Array<string>
 }
 
 export interface Identifier extends SyntaxNode {
@@ -158,7 +159,6 @@ export interface WhenExpression extends SyntaxNode {
 export interface FunctionExpression {
 
 }
-
 
 export interface WhereClause extends SyntaxNode {
   predicate: BinaryExpression

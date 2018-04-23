@@ -27,6 +27,7 @@ enum RunnerState {
 }
 
 const precedence = {
+  // todo: resets before drops.
   drops: 0,
   create: 1,
   trigger: 2,
@@ -49,7 +50,6 @@ export class MigrationRunner extends EventEmitter {
   name: string
   server: Server
   db: any
-  activeStep: any
   stepIndex: number
   stepCount: number
   steps: Array<Step>
@@ -65,7 +65,6 @@ export class MigrationRunner extends EventEmitter {
     this.name = doc.name
     this.root = dirname(doc.path)
     this.sqlgen = sql.create(server.vendor, { })
-    this.activeStep = null
     this.stepIndex = 0
     this.stepCount = doc.steps.length
     this.steps = this.createSteps(doc)
@@ -145,6 +144,9 @@ export class MigrationRunner extends EventEmitter {
     this.emit('step', step)
 
     this.log('running step: ' + step.toString())
+    
+    // todo: if the step is "simple" this is fine, but if it does
+    // some complex work, then maybe we do some extra stuff.
     let query: string = step.render(this.sqlgen)
 
     this.log('query: \n' + query)
@@ -203,7 +205,8 @@ export class MigrationRunner extends EventEmitter {
 
   validate() {
     // todo: this could look at the migration and do some pre-checks
-    // todo: ensure create has drop
+    // todo: ensure create has drop?
+    // todo: ensure that each step with an 'as' attr can run as that user?
     let self = this
     self.steps.forEach(function (step) {
       // pre-render all the steps

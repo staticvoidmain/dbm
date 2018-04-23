@@ -4,7 +4,7 @@
 import { Scanner, Token } from './scanner'
 import { Chars } from './keys'
 import { SyntaxKind } from './syntax';
-// todo: can we just say *?
+
 import {
   SyntaxNode,
   SelectNode,
@@ -91,6 +91,7 @@ export class Parser {
     }
     this.error('Expected ' + kind + ' but found ' + next.kind);
   }
+  
   private parseOptional(kind: SyntaxKind, cb): SyntaxNode {
     const next = this.scanner.scan();
     if (next.kind === kind) {
@@ -113,16 +114,21 @@ export class Parser {
     // node.order_by = this.parseOptional(SyntaxKind.order_by)
     // does having go with the group-by?
     // node.having = this.parseOptional(SyntaxKind.having_clause)
+    
+    // todo: full-text index support.
+    // node.contains freetext etc.
 
     return node
   }
-  // TODOODODODOODOD: a simple parser boys, we can do it.
+
   private parseInto(): IntoClause {
     return undefined
   }
+
   private parseFrom(): FromClause {
     return undefined
   }
+  
   private parseWhere(): WhereClause {
     return undefined
   }

@@ -4,6 +4,7 @@ import { IManagedDatabase } from '../database'
 import { EventEmitter } from 'events'
 import { mergeResults } from './common'
 import { ok } from "assert";
+import { Server } from "../environment";
 
 const newline = (process.platform === 'win32' ? '\r\n' : '\n')
 const columns = sqlgen.define({
@@ -35,17 +36,47 @@ const tables = sqlgen.define({
   ]
 })
 
+const getProceduresQuery = `
+select name, text
+from sys.procedures p
+left join syscomments c
+  on p.object_id = c.id
+where is_ms_shipped = 0
+order by number, colid
+`
+
+const getKeyInfoQuery = `select 
+	[key_id] = keys.[object_id],
+	[parent] = object_name(keys.parent_object_id),
+	[key_name] = keys.name,
+	[column_name] = column_def_parent.name,
+
+	[reference_table] = object_name(cols.referenced_object_id),	
+	[reference_column_name] = column_def_referenced.name
+from sys.foreign_keys keys 
+left join sys.foreign_key_columns cols
+	on cols.constraint_object_id = keys.object_id
+left join sys.all_columns column_def_parent
+	on column_def_parent.column_id = cols.parent_column_id
+	and column_def_parent.object_id = cols.parent_object_id
+
+left join sys.all_columns column_def_referenced
+	on column_def_referenced.column_id = cols.referenced_column_id
+	and column_def_referenced.object_id = cols.referenced_object_id
+order by [key_id]`
+
 const getAllTablesQuery = tables.select().toQuery().text
 
-export function create(database) {
+// todo: is this a HOST?
+export function create(database: Server) {
   return new MicrosoftSql(database)
 }
 
 function addArgs(req: mssql.Request, args) {
   ok(args.length % 2 === 0, "must supply an even number of args!")
 
-  for (var i = 0; i < args.length; i+=2) {
-    req.input(args[i], args[i+1])
+  for (var i = 0; i < args.length; i += 2) {
+    req.input(args[i], args[i + 1])
   }
 }
 
@@ -67,16 +98,28 @@ export class MicrosoftSql
   separator: string;
   connect: any;
 
-  constructor(database) {
+  constructor(database: Server) {
     super()
 
     this.connect = function () {
-      let connection = new mssql.Connection({
-        user: database.user,
-        password: database.password,
+      let config: any = {
         server: database.host,
-        database: database.name
-      })
+        database: database.name,
+        options: {}
+      };
+
+      // todo: this doesn't work currently..
+      if (database.security === "integrated") {
+        // if you want to use integrated security, well, you can.
+        // but you must have the right driver, and it's a little maybe sketchy.
+        config.driver = "msnodesqlv8";
+        config.options.trustedConnection = true
+      } else {
+        config.user = database.user;
+        config.password = database.password;
+      }
+
+      let connection = new mssql.Connection(config)
 
       return connection.connect()
     }
@@ -89,9 +132,9 @@ export class MicrosoftSql
     return Promise.all([
       this.getAllColumns,
       this.getAllTables,
-      // getAllKeys
-      // getAllProcedures
-      // getAllViews
+      // this.getAllKeys
+      // this.getAllProcedures
+      // this.getAllViews
     ]).then(mergeResults)
   }
 
@@ -100,10 +143,7 @@ export class MicrosoftSql
       .then(function (connection) {
 
         let [schema, tableName] = name.split('.')
-
         let req = new mssql.Request(connection)
-
-        // this is a common query that's copy-pasted
         let singleTable = tables
           .select()
           .where(tables.schema.equals(schema)
@@ -145,14 +185,19 @@ export class MicrosoftSql
   }
 
   getProcedures() {
-    // execute some sp_helptext up in this biatch.
+    return this.connect()
+      .then(function(connection) {
+        let req = new mssql.Request(connection)
+
+        return req.query(proceduresQuery)
+      })
   }
 
   getAllColumns() {
     return this.connect()
       .then(function (connection) {
         let req = new mssql.Request(connection)
-        
+
         return req.query(getAllColumnsQuery)
           .then(function (res) {
             return res[0]
@@ -164,11 +209,11 @@ export class MicrosoftSql
     return this.connect()
       .then((connection) => {
         let req = new mssql.Request(connection)
-     
+
         return req.query(getAllTablesQuery)
           .then(function (res) {
             return res[0]
           })
-      }) 
+      })
   }
 }

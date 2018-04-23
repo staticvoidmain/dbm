@@ -6,6 +6,10 @@ export interface IDatabaseSchema {
   keys?: Array<any>
 }
 
+export function getSingleTable() {
+  
+}
+
 /**
  * combines a set of promise results into a single result.
  *
