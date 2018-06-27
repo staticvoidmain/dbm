@@ -5,12 +5,14 @@ import { exec } from 'child_process'
 import {
   existsSync,
   readFileSync,
-  writeFileSync
+  writeFileSync,
+  read
 } from 'fs'
 
 import { show } from './views/app'
 import { MigrationRunner } from './tasks/migrate'
 import { BackupRunner } from './tasks/backup'
+import { Linter } from './tasks/lint'
 import { MigrationDocument } from './tasks/migration/document';
 import { EnvironmentConfig } from './lib/environment';
 import { create } from './lib/database';
@@ -194,6 +196,22 @@ const config = (args) => {
   })
 }
 
+const lint = (args) => {
+  if (!args.length || args[0] === 'help') {
+    die('dbm lint **/*.sql --rules=conf.yml --dump-ast')
+  }
+
+  const options = {
+    rules: option(args, '--rules'),
+    dumpAst: flag(args, '--dump-ast')
+  }
+
+  // todo: support globs
+  const linter = new Linter(options);
+  const file = readFileSync(args[0])
+  linter.lint(file);
+}
+
 const analyze = (args) => {
   if (!args.length || args[0] === 'help') {
     die('dbm analyze some/server/db --config=analysis.yml --verbose')
@@ -261,14 +279,13 @@ const commands = {
   init: initialize,
   backup: backup,
   migrate: migrate,
+  lint: lint,
   analyze: analyze,
   optimize: optimize,
   config: config,
   compare: compare,
   help: help,
-  show: (args) => {
-    show()
-  }
+  show: show
 }
 
 const home = process.env.DBM_HOME

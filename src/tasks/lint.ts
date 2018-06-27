@@ -10,21 +10,21 @@
    mssql.no_nolock: true
  */
 
-import {Parser} from '../lib/parser/parser'
-import {SyntaxKind} from '../lib/parser/syntax'
+import { SyntaxNode } from '../lib/parser/ast'
+import { Parser } from '../lib/parser/parser'
+import { SyntaxKind } from '../lib/parser/syntax'
 
 // note: these are going to likely be platform specific.
 // also, I'm totally making these names up as I go as a form of note taking.
 const rules = {
+
+  keyword_case: 'lower',
+
   key_names_must_end_with_id: true,
 
   // SomeID is just shouting.
   // Prefer SomeId instead
   sensible_id_casing: true,
-  keywords_must_be_lower: true,
-
-  // if you are some kind of MONSTER...
-  keywords_must_be_upper: false,
 
   // create <type> Schema.SomeObjectName
   create_must_include_schema: true,
@@ -42,11 +42,13 @@ const rules = {
 
   // INNER OUTER LEFT CROSS etc.
   require_explicit_join_type: true,
+  // documentation yo
   procedure_requires_doc_string: false,
-  procedure_name_must_begin_with_prefix: true,
+
+  procedure_name_prefix: 'pr_',
 
   // NO hungarian names allowed, ever.
-  not_from_hunary: true,
+  not_from_hungary: true,
 
   // look out for n'quote' MSSQL
   must_use_unicode_strings: false,
@@ -62,7 +64,7 @@ const rules = {
   /**
    * dirty reads should be off by default
    */
-  no_nolock: true
+  no_nolock: true,
 }
 
 function isUpper (token) {
@@ -77,22 +79,46 @@ function isUpper (token) {
   return true
 }
 
-function visit (node, kind, callback) {
-  if (node.kind === kind) {
-    callback(node)
+function isHungarian(name: string) {
+  // we'll just test the most common ones.
+  const c = name[0];
+
+  return c === 'n' || c === 'd';
+}
+
+function visit (node, handlers) {
+
+  for (const visitor of handlers) {
+    if (visitor.match(node.kind)) {
+      visitor.action(node)
+    }
   }
 
   for (const child of node.children) {
-    visit(child, kind, callback)
+    visit(child, handlers)
   }
 }
 
-function evaluate (rule, statement, lintResult) {
-  return
+function isKeyword(kind: SyntaxKind): boolean {
+  return kind >= SyntaxKind.addKeyword
+    && kind <= SyntaxKind.withKeyword
+}
+
+// todo: capture the case info in the AST
+function requireCase(type) {
+  return (node) => {
+    // stuff
+  }
+}
+
+interface Visitor {
+  match: (SyntaxKind) => boolean,
+  action: (SyntaxNode) => void
 }
 
 export class Linter {
   rules: any;
+  handlers: Visitor[]
 
   // todo: specify the LinterOptions type.
   constructor(options) {
@@ -104,16 +130,18 @@ export class Linter {
     const tree = parser.parse(script, {})
     const result = []
 
-    tree.nodes.forEach((statement) => {
+    // todo: put the rules into classes
+    // so we don't have to register for node callbacks.
+    // that don't matter.
+    if (rules.keyword_case) {
+      this.handlers.push({
+        match: isKeyword,
+        action: requireCase(rules.keyword_case)
+      });
+    }
 
-      for (const key in this.rules) {
-        const rule = this.rules[key]
-        if (rule) {
-          evaluate(key, statement, result)
-        }
-      }
-    })
-
-    return result
+    tree.nodes.forEach(n => {
+      visit(n, this.handlers);
+    });
   }
 }

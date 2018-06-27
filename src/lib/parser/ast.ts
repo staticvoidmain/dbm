@@ -5,19 +5,23 @@ as many kinds of sql specifications as possible
 
 // totally made up AST based on zero CS theory or practical
 // knowledge of how parsers and scanners should work. :)
-
+  declare @x int = 11
   if (@x > 10)
   begin
     select *
     from Foo.Bar.Baz
-    where Val > @x or Val < @x
+    where Val > @x or Val < @x and Val is not null
   end
-
+  declare_statement
+    decls: [
+      name: @x
+      value: const_expr(number(11))
+    ]
   if_statement
     binary_expression
       left: variable(@x)
       op: greater_than
-      right: numeric_literal(10)
+      right: number(10)
     block
       begin_keyword
       expression
@@ -27,16 +31,18 @@ as many kinds of sql specifications as possible
           ]
         from_clause
           table_identity
-            db: Label<Foo>
-            schame: Label<Bar>
-            table: Label<Baz>
+            db: label(Foo)
+            schame: label(Bar)
+            table: label(Baz)
         where_clause
-          binary_expression
-            left:
-              binary_expression
-            op: or_operator
-            right:
-              binary_expression
+          keyword: where
+          expr: binary_expression
+            left: binary_expression
+              left:
+                binary_expression
+              op: or_operator
+              right:
+                binary_expression
 
       end_keyword
 */
@@ -49,10 +55,12 @@ as many kinds of sql specifications as possible
   // todo: @x is null
   // todo: @x is not null
 
-
  */
 
-import { SyntaxKind } from './syntax'
+import {
+  SyntaxKind
+} from './syntax'
+import { Token } from './scanner';
 
 export interface TextRange {
   start: number
@@ -72,33 +80,12 @@ export interface Identifier extends SyntaxNode {
   text: string
 }
 
-export type Comment =
-  SyntaxKind.singleLineComment
-  | SyntaxKind.blockComment;
-
-export interface CommentRange extends TextRange {
-  kind: Comment;
-}
-
-export interface SelectNode extends SyntaxNode {
-  columns: Array<ColumnNode>
-  from: FromClause
-  into: IntoClause
-  where?: WhereClause
-  // todo: account for these.
-  order_by?: any
-  group_by?: any
-  having?: any
-}
-
-// todo: name node OR an aliased expression
-// what to do?
-
 export type ColumnNode = ColumnExpression | NamedColumn
 
+// is quoted?
 export interface NamedColumn extends SyntaxNode {
-  column: Identifier // dotted?
-  table?: Identifier // dotted?
+  column: Identifier
+  table?: Identifier
   alias?: string
 }
 
@@ -115,14 +102,19 @@ export interface BinaryExpression extends SyntaxNode {
 
 export interface EqualsOperator extends SyntaxNode { kind: SyntaxKind.equal }
 export interface NotEqualsOperator extends SyntaxNode { kind: SyntaxKind.notEqual }
-export interface OrOperator extends SyntaxNode { kind: SyntaxKind.orKeyword }
-export interface AndOperator extends SyntaxNode { kind: SyntaxKind.andKeyword }
+export interface OrOperator extends SyntaxNode { kind: SyntaxKind.or_keyword }
+export interface AndOperator extends SyntaxNode { kind: SyntaxKind.and_keyword }
 export interface GreaterThanOperator extends SyntaxNode { kind: SyntaxKind.greaterThan }
 export interface LessThanOperator extends SyntaxNode { kind: SyntaxKind.lessThan }
 export interface GreaterThanEqualOperator extends SyntaxNode { kind: SyntaxKind.greaterThanEqual }
 export interface LessThanEqualOperator extends SyntaxNode { kind: SyntaxKind.lessThanEqual }
-export interface LikeOperator extends SyntaxNode { kind: SyntaxKind.likeKeyword }
-export interface InOperator extends SyntaxNode { kind: SyntaxKind.inKeyword }
+export interface LikeOperator extends SyntaxNode { kind: SyntaxKind.like_keyword }
+export interface InOperator extends SyntaxNode { kind: SyntaxKind.in_keyword }
+export interface ExistsOperator extends SyntaxNode { kind: SyntaxKind.exists_keyword }
+export interface NotOperator extends SyntaxNode { kind: SyntaxKind.not_keyword }
+
+export interface DefaultLiteral extends SyntaxNode { kind: SyntaxKind.default_keyword }
+export interface NullLiteral extends SyntaxNode { kind: SyntaxKind.null_keyword }
 
 export type BinaryOperator =
   | EqualsOperator
@@ -135,47 +127,153 @@ export type BinaryOperator =
   | LessThanEqualOperator
   | LikeOperator
 
-// really just anything but BinaryExpr
-export type ValueExpression =
-FunctionExpression
-| ConstantExpression
-| CaseExpression
-// todo: more
+  export interface PlusEqualsOperator extends SyntaxNode { kind: SyntaxKind.plusEqualsAssignment }
+  export interface MinusEqualsOperator extends SyntaxNode { kind: SyntaxKind.minusEqualsAssignment }
+  export interface MultiplyEqualsOperator extends SyntaxNode { kind: SyntaxKind.mulEqualsAssignment }
+  export interface DivEqualsOperator extends SyntaxNode { kind: SyntaxKind.divEqualsAssignment }
+  export interface ModEqualsOperator extends SyntaxNode { kind: SyntaxKind.modEqualsAssignment }
+  export interface AndEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseAndAssignment }
+  export interface XorEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseXorAssignment }
+  export interface OrEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseOrAssignment }
 
+export type AssignmentOperator =
+  | EqualsOperator
+  | PlusEqualsOperator
+  | MinusEqualsOperator
+  | MultiplyEqualsOperator
+  | DivEqualsOperator
+  | ModEqualsOperator
+  | AndEqualsOperator
+  | XorEqualsOperator
+  | OrEqualsOperator
+
+export type ValueExpression =
+  | FunctionExpression
+  | ConstantExpression
+  | CaseExpression
+  | BinaryExpression
+// todo: table expression with select-top 1 some_col
+// or just select 1
+
+// todo: make this a type to account for nulls and defaults and all that
+// good stuff...
 export interface ConstantExpression extends SyntaxNode {
+  // hack:
   value: any
 }
 
 export interface CaseExpression extends SyntaxNode {
+  keyword: Token
   cases: Array<WhenExpression>
-  else: FunctionExpression | ConstantExpression
+  else: ValueExpression
 }
 
 export interface WhenExpression extends SyntaxNode {
+  keyword: Token
   when: BinaryExpression
-  then: FunctionExpression | ConstantExpression
+  then: ValueExpression
 }
 
+// function CALL expression?
 export interface FunctionExpression {
 
 }
 
 export interface WhereClause extends SyntaxNode {
+  keyword: Token
   predicate: BinaryExpression
 }
 
 export interface IntoClause extends SyntaxNode {
+  keyword: Token
   target: Identifier
 }
 
-export interface FromClause extends SyntaxNode {
-  // todo
+export interface Source extends SyntaxNode {
+  alias?: string
+  with?: string[] // todo: specialized type for this
 }
 
-export interface DeclareStatement extends SyntaxNode {
-  // todo: support duplicate declarations in a single declare
+// todo: TableLikeObject?
+export interface NamedSource extends SyntaxNode {
+  // table/view/variable/temp_table
+  name: string
+}
+
+export type RowValueExpression =
+| DefaultLiteral
+| NullLiteral
+| ValueExpression
+
+export interface DerivedTable extends SyntaxNode {
+  keyword: Token
+  expressions: RowValueExpression[]
+}
+
+export type DataSource =
+  | NamedSource
+  | FunctionExpression
+  | DerivedTable
+
+export interface FromClause extends SyntaxNode {
+  keyword: Token
+  sources: DataSource[]
 }
 
 export interface WhereClause extends SyntaxNode {
 
 }
+
+// --------------------
+// statements
+// --------------------
+
+// declare @foo varchar(255) = 'asdf';
+export interface VariableDeclarationStatement extends SyntaxNode {
+  keyword: Token
+  declarations: TableDeclaration | VariableDeclaration[]
+}
+
+export interface TableDeclaration extends SyntaxNode {}
+
+export interface VariableDeclaration extends SyntaxNode {
+  name: string
+  as: string
+  type: string // todo: type
+  expression?: ValueExpression
+}
+
+// set @x = foo
+export interface SetStatement extends SyntaxNode {
+  keyword: Token // todo: nodes for all these.
+  name: string
+  op: AssignmentOperator
+  expression: ValueExpression
+}
+
+export interface SelectStatement extends SyntaxNode {
+  columns: Array<ColumnNode>
+  from: FromClause
+  into: IntoClause
+  where?: WhereClause
+  // todo: account for these.
+  order_by?: any
+  group_by?: any
+  having?: any
+}
+
+export interface GoStatement extends SyntaxNode {
+  keyword: Token
+  count?: number
+}
+
+// unused stuff
+
+// todo: we don't actually capture comments right now.
+// export type Comment =
+//   SyntaxKind.singleLineComment
+//   | SyntaxKind.blockComment;
+
+// export interface CommentRange extends TextRange {
+//   kind: Comment;
+// }

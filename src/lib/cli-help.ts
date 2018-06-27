@@ -26,12 +26,17 @@ export const commandHelp = {
     'dbm backup some/server --safe --script-per-object --backup-path ~/backups/myserver'
   ]),
 
+  'lint': new HelpItem('lint', '', [
+    'dbm lint some-file.sql',
+    'dbm lint folder/**/*.sql --print-ast --rules=mssql-recommended.yml'
+  ]),
+
   'migrate': new HelpItem('migrate', 'Executes a migration script ', [
     'dbm migrate my/server migration.yml',
     'dbm migrate my/server migration.yml --log=migration.log'
   ]),
 
-  'analyze': new HelpItem('analyze <db> [...options]', '', [
+  'analyze': new HelpItem('analyze <db> [...options]', 'Report potential issues.', [
     'dbm analyze dev/sales --all'
   ]),
 
@@ -39,7 +44,8 @@ export const commandHelp = {
     'dbm compare dev/sales prod/sales --diff-rowcount'
   ]),
 
-  'show': new HelpItem('show', '', [
+  'show': new HelpItem('show', 'Show the terminal ui', [
+    'dbm show'
   ]),
 
   'optimize': new HelpItem('optimize', '', [

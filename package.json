@@ -4,6 +4,7 @@
   "description": "A database Administration, Migration, Backup, Tuning tool",
   "main": "./dist/dbm.js",
   "scripts": {
+		"build": "gulp",
     "start": "node dist/dbm.js",
     "test": "mocha --opts mocha.opts",
     "test:auto": "mocha --opts mocha.opts --watch"
@@ -25,35 +26,37 @@
   },
   "homepage": "https://github.com/staticvoidmain/dbm#readme",
   "dependencies": {
-    "@types/core-js": "^0.9.42",
     "blessed": "^0.1.81",
     "chalk": "^1.1.3",
     "emphasize": "^1.2.0",
     "js-yaml": "^3.7.0",
-    "sql": "^0.73.0"
+    "sql": "^0.78.0"
   },
   "devDependencies": {
     "@types/blessed": "^0.1.4",
     "@types/chai": "^3.4.35",
     "@types/chalk": "^0.4.31",
+    "@types/core-js": "^0.9.42",
     "@types/mocha": "^2.2.40",
     "@types/mssql": "^3.3.1",
     "@types/node": "^7.0.5",
-    "@types/sqlite3": "^2.2.33",
     "chai": "^3.5.0",
     "del": "^2.2.2",
     "eslint": "^3.13.1",
     "eslint-config-standard": "^6.2.1",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^2.0.1",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-typescript": "^3.1.5",
-    "mocha": "^3.2.0",
+    "mocha": "^5.2.0",
     "mocha-typescript": "^1.0.23",
+    "ts-node": "^3.0.2",
+    "typescript": "^2.2.1"
+  },
+  "optional": {
     "mssql": "^3.3.0",
     "pg": "^6.1.2",
     "sqlite3": "^3.1.8",
-    "ts-node": "^3.0.2",
-    "typescript": "^2.2.1"
+    "@types/sqlite3": "^2.2.33"
   }
 }

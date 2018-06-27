@@ -3,7 +3,7 @@ import { SyntaxKind } from './syntax'
 
 function isLetter(ch): boolean {
   return Chars.A >= ch && ch <= Chars.Z
-      || Chars.a >= ch && ch <= Chars.z
+    || Chars.a >= ch && ch <= Chars.z
 }
 
 function isDigit(charCode): boolean {
@@ -29,162 +29,191 @@ export class Token {
 }
 
 const keywordMap = new Map<string, SyntaxKind>([
-  [ 'add',               SyntaxKind.addKeyword ],
-  [ 'all',               SyntaxKind.allKeyword ],
-  [ 'alter',             SyntaxKind.alterKeyword ],
-  [ 'and',               SyntaxKind.andKeyword ],
-  [ 'any',               SyntaxKind.anyKeyword ],
-  [ 'as',                SyntaxKind.asKeyword ],
-  [ 'asc',               SyntaxKind.ascKeyword ],
-  [ 'authorization',     SyntaxKind.authorizationKeyword ],
-  [ 'backup',            SyntaxKind.backupKeyword ],
-  [ 'begin',             SyntaxKind.beginKeyword ],
-  [ 'between',           SyntaxKind.betweenKeyword ],
-  [ 'break',             SyntaxKind.breakKeyword ],
-  [ 'by',                SyntaxKind.byKeyword ],
-  [ 'cascade',           SyntaxKind.cascadeKeyword ],
-  [ 'case',              SyntaxKind.caseKeyword ],
-  [ 'check',             SyntaxKind.checkKeyword ],
-  [ 'checkpoint',        SyntaxKind.checkpointKeyword ],
-  [ 'close',             SyntaxKind.closeKeyword ],
-  [ 'clustered',         SyntaxKind.clusteredKeyword ],
-  [ 'coalesce',          SyntaxKind.coalesceKeyword ],
-  [ 'collate',           SyntaxKind.collateKeyword ],
-  [ 'column',            SyntaxKind.columnKeyword ],
-  [ 'commit',            SyntaxKind.commitKeyword ],
-  [ 'compute',           SyntaxKind.computeKeyword ],
-  [ 'constraint',        SyntaxKind.constraintKeyword ],
-  [ 'contains',          SyntaxKind.containsKeyword ],
-  [ 'containstable',     SyntaxKind.containstableKeyword ],
-  [ 'continue',          SyntaxKind.continueKeyword ],
-  [ 'convert',           SyntaxKind.convertKeyword ],
-  [ 'create',            SyntaxKind.createKeyword ],
-  [ 'cross',             SyntaxKind.crossKeyword ],
-  [ 'current',           SyntaxKind.currentKeyword ],
-  [ 'current_date',      SyntaxKind.current_dateKeyword ],
-  [ 'current_time',      SyntaxKind.current_timeKeyword ],
-  [ 'current_timestamp', SyntaxKind.current_timestampKeyword ],
-  [ 'current_user',      SyntaxKind.current_userKeyword ],
-  [ 'cursor',            SyntaxKind.cursorKeyword ],
-  [ 'database',          SyntaxKind.databaseKeyword ],
-  [ 'dbcc',              SyntaxKind.dbccKeyword ],
-  [ 'deallocate',        SyntaxKind.deallocateKeyword ],
-  [ 'declare',           SyntaxKind.declareKeyword ],
-  [ 'default',           SyntaxKind.defaultKeyword ],
-  [ 'delete',            SyntaxKind.deleteKeyword ],
-  [ 'deny',              SyntaxKind.denyKeyword ],
-  [ 'desc',              SyntaxKind.descKeyword ],
-  [ 'disk',              SyntaxKind.diskKeyword ],
-  [ 'distinct',          SyntaxKind.distinctKeyword ],
-  [ 'distributed',       SyntaxKind.distributedKeyword ],
-  [ 'double',            SyntaxKind.doubleKeyword ],
-  [ 'drop',              SyntaxKind.dropKeyword ],
-  [ 'dump',              SyntaxKind.dumpKeyword ],
-  [ 'else',              SyntaxKind.elseKeyword ],
-  [ 'end',               SyntaxKind.endKeyword ],
-  [ 'errlvl',            SyntaxKind.errlvlKeyword ],
-  [ 'escape',            SyntaxKind.escapeKeyword ],
-  [ 'except',            SyntaxKind.exceptKeyword ],
-  [ 'exec',              SyntaxKind.execKeyword ],
-  [ 'execute',           SyntaxKind.executeKeyword ],
-  [ 'exists',            SyntaxKind.existsKeyword ],
-  [ 'exit',              SyntaxKind.exitKeyword ],
-  [ 'external',          SyntaxKind.externalKeyword ],
-  [ 'fetch',             SyntaxKind.fetchKeyword ],
-  [ 'file',              SyntaxKind.fileKeyword ],
-  [ 'fillfactor',        SyntaxKind.fillfactorKeyword ],
-  [ 'for',               SyntaxKind.forKeyword ],
-  [ 'foreign',           SyntaxKind.foreignKeyword ],
-  [ 'freetext',          SyntaxKind.freetextKeyword ],
-  [ 'freetexttable',     SyntaxKind.freetexttableKeyword ],
-  [ 'from',              SyntaxKind.fromKeyword ],
-  [ 'full',              SyntaxKind.fullKeyword ],
-  [ 'function',          SyntaxKind.functionKeyword ],
-  [ 'goto',              SyntaxKind.gotoKeyword ],
-  [ 'grant',             SyntaxKind.grantKeyword ],
-  [ 'group',             SyntaxKind.groupKeyword ],
-  [ 'having',            SyntaxKind.havingKeyword ],
-  [ 'holdlock',          SyntaxKind.holdlockKeyword ],
-  [ 'identity',          SyntaxKind.identityKeyword ],
-  [ 'identity_insert',   SyntaxKind.identity_insertKeyword ],
-  [ 'identitycol',       SyntaxKind.identitycolKeyword ],
-  [ 'if',                SyntaxKind.ifKeyword ],
-  [ 'in',                SyntaxKind.inKeyword ],
-  [ 'index',             SyntaxKind.indexKeyword ],
-  [ 'inner',             SyntaxKind.innerKeyword ],
-  [ 'insert',            SyntaxKind.insertKeyword ],
-  [ 'intersect',         SyntaxKind.intersectKeyword ],
-  [ 'into',              SyntaxKind.intoKeyword ],
-  [ 'is',                SyntaxKind.isKeyword ],
-  [ 'join',              SyntaxKind.joinKeyword ],
-  [ 'key',               SyntaxKind.keyKeyword ],
-  [ 'kill',              SyntaxKind.killKeyword ],
-  [ 'left',              SyntaxKind.leftKeyword ],
-  [ 'like',              SyntaxKind.likeKeyword ],
-  [ 'load',              SyntaxKind.loadKeyword ],
-  [ 'merge',             SyntaxKind.mergeKeyword ],
-  [ 'nocheck',           SyntaxKind.nocheckKeyword ],
-  [ 'nonclustered',      SyntaxKind.nonclusteredKeyword ],
-  [ 'not',               SyntaxKind.notKeyword ],
-  [ 'null',              SyntaxKind.nullKeyword ],
-  [ 'nullif',            SyntaxKind.nullifKeyword ],
-  [ 'of',                SyntaxKind.ofKeyword ],
-  [ 'off',               SyntaxKind.offKeyword ],
-  [ 'offsets',           SyntaxKind.offsetsKeyword ],
-  [ 'on',                SyntaxKind.onKeyword ],
-  [ 'open',              SyntaxKind.openKeyword ],
-  [ 'opendatasource',    SyntaxKind.opendatasourceKeyword ],
-  [ 'openquery',         SyntaxKind.openqueryKeyword ],
-  [ 'openrowset',        SyntaxKind.openrowsetKeyword ],
-  [ 'openxml',           SyntaxKind.openxmlKeyword ],
-  [ 'option',            SyntaxKind.optionKeyword ],
-  [ 'or',                SyntaxKind.orKeyword ],
-  [ 'order',             SyntaxKind.orderKeyword ],
-  [ 'outer',             SyntaxKind.outerKeyword ],
-  [ 'over',              SyntaxKind.overKeyword ],
-  [ 'percent',           SyntaxKind.percentKeyword ],
-  [ 'pivot',             SyntaxKind.pivotKeyword ],
-  [ 'plan',              SyntaxKind.planKeyword ],
-  [ 'precision',         SyntaxKind.precisionKeyword ],
-  [ 'primary',           SyntaxKind.primaryKeyword ],
-  [ 'print',             SyntaxKind.printKeyword ],
-  [ 'proc',              SyntaxKind.procKeyword ],
-  [ 'procedure',         SyntaxKind.procedureKeyword ],
-  [ 'public',            SyntaxKind.publicKeyword ],
-  [ 'raiserror',         SyntaxKind.raiserrorKeyword ],
-  [ 'read',              SyntaxKind.readKeyword ],
-  [ 'readtext',          SyntaxKind.readtextKeyword ],
-  [ 'reconfigure',       SyntaxKind.reconfigureKeyword ],
-  [ 'references',        SyntaxKind.referencesKeyword ],
-  [ 'replication',       SyntaxKind.replicationKeyword ],
-  [ 'restore',           SyntaxKind.restoreKeyword ],
-  [ 'restrict',          SyntaxKind.restrictKeyword ],
-  [ 'return',            SyntaxKind.returnKeyword ],
-  [ 'revert',            SyntaxKind.revertKeyword ],
-  [ 'revoke',            SyntaxKind.revokeKeyword ],
-  [ 'right',             SyntaxKind.rightKeyword ],
-  [ 'rollback',          SyntaxKind.rollbackKeyword ],
-  [ 'rowcount',          SyntaxKind.rowcountKeyword ],
-  [ 'rule',              SyntaxKind.ruleKeyword ],
-  [ 'save',              SyntaxKind.saveKeyword ],
-  [ 'schema',            SyntaxKind.schemaKeyword ],
-  [ 'select',            SyntaxKind.selectKeyword ],
-  [ 'set',               SyntaxKind.setKeyword ],
-  [ 'union',             SyntaxKind.unionKeyword ],
-  [ 'unique',            SyntaxKind.uniqueKeyword ],
-  [ 'unpivot',           SyntaxKind.unpivotKeyword ],
-  [ 'update',            SyntaxKind.updateKeyword ],
-  [ 'updatetext',        SyntaxKind.updatetextKeyword ],
-  [ 'use',               SyntaxKind.useKeyword ],
-  [ 'user',              SyntaxKind.userKeyword ],
-  [ 'values',            SyntaxKind.valuesKeyword ],
-  [ 'varying',           SyntaxKind.varyingKeyword ],
-  [ 'view',              SyntaxKind.viewKeyword ],
-  [ 'waitfor',           SyntaxKind.waitforKeyword ],
-  [ 'when',              SyntaxKind.whenKeyword ],
-  [ 'where',             SyntaxKind.whereKeyword ],
-  [ 'while',             SyntaxKind.whileKeyword ],
-  [ 'with',              SyntaxKind.withKeyword ]
+  [ 'add', SyntaxKind.add_keyword ],
+  [ 'all', SyntaxKind.all_keyword ],
+  [ 'alter', SyntaxKind.alter_keyword ],
+  [ 'and', SyntaxKind.and_keyword ],
+  [ 'any', SyntaxKind.any_keyword ],
+  [ 'as', SyntaxKind.as_keyword ],
+  [ 'asc', SyntaxKind.asc_keyword ],
+  [ 'authorization', SyntaxKind.authorization_keyword ],
+  [ 'backup', SyntaxKind.backup_keyword ],
+  [ 'begin', SyntaxKind.begin_keyword ],
+  [ 'between', SyntaxKind.between_keyword ],
+  [ 'break', SyntaxKind.break_keyword ],
+  [ 'browse', SyntaxKind.browse_keyword ],
+  [ 'bulk', SyntaxKind.bulk_keyword ],
+  [ 'by', SyntaxKind.by_keyword ],
+  [ 'cascade', SyntaxKind.cascade_keyword ],
+  [ 'case', SyntaxKind.case_keyword ],
+  [ 'check', SyntaxKind.check_keyword ],
+  [ 'checkpoint', SyntaxKind.checkpoint_keyword ],
+  [ 'close', SyntaxKind.close_keyword ],
+  [ 'clustered', SyntaxKind.clustered_keyword ],
+  [ 'coalesce', SyntaxKind.coalesce_keyword ],
+  [ 'collate', SyntaxKind.collate_keyword ],
+  [ 'column', SyntaxKind.column_keyword ],
+  [ 'commit', SyntaxKind.commit_keyword ],
+  [ 'compute', SyntaxKind.compute_keyword ],
+  [ 'constraint', SyntaxKind.constraint_keyword ],
+  [ 'contains', SyntaxKind.contains_keyword ],
+  [ 'containstable', SyntaxKind.containstable_keyword ],
+  [ 'continue', SyntaxKind.continue_keyword ],
+  [ 'convert', SyntaxKind.convert_keyword ],
+  [ 'create', SyntaxKind.create_keyword ],
+  [ 'cross', SyntaxKind.cross_keyword ],
+  [ 'current', SyntaxKind.current_keyword ],
+  [ 'current_date', SyntaxKind.current_date_keyword ],
+  [ 'current_time', SyntaxKind.current_time_keyword ],
+  [ 'current_timestamp', SyntaxKind.current_timestamp_keyword ],
+  [ 'current_user', SyntaxKind.current_user_keyword ],
+  [ 'cursor', SyntaxKind.cursor_keyword ],
+  [ 'database', SyntaxKind.database_keyword ],
+  [ 'dbcc', SyntaxKind.dbcc_keyword ],
+  [ 'deallocate', SyntaxKind.deallocate_keyword ],
+  [ 'declare', SyntaxKind.declare_keyword ],
+  [ 'default', SyntaxKind.default_keyword ],
+  [ 'delete', SyntaxKind.delete_keyword ],
+  [ 'deny', SyntaxKind.deny_keyword ],
+  [ 'desc', SyntaxKind.desc_keyword ],
+  [ 'disk', SyntaxKind.disk_keyword ],
+  [ 'distinct', SyntaxKind.distinct_keyword ],
+  [ 'distributed', SyntaxKind.distributed_keyword ],
+  [ 'double', SyntaxKind.double_keyword ],
+  [ 'drop', SyntaxKind.drop_keyword ],
+  [ 'dump', SyntaxKind.dump_keyword ],
+  [ 'else', SyntaxKind.else_keyword ],
+  [ 'end', SyntaxKind.end_keyword ],
+  [ 'errlvl', SyntaxKind.errlvl_keyword ],
+  [ 'escape', SyntaxKind.escape_keyword ],
+  [ 'except', SyntaxKind.except_keyword ],
+  [ 'exec', SyntaxKind.exec_keyword ],
+  [ 'execute', SyntaxKind.execute_keyword ],
+  [ 'exists', SyntaxKind.exists_keyword ],
+  [ 'exit', SyntaxKind.exit_keyword ],
+  [ 'external', SyntaxKind.external_keyword ],
+  [ 'fetch', SyntaxKind.fetch_keyword ],
+  [ 'file', SyntaxKind.file_keyword ],
+  [ 'fillfactor', SyntaxKind.fillfactor_keyword ],
+  [ 'for', SyntaxKind.for_keyword ],
+  [ 'foreign', SyntaxKind.foreign_keyword ],
+  [ 'freetext', SyntaxKind.freetext_keyword ],
+  [ 'freetexttable', SyntaxKind.freetexttable_keyword ],
+  [ 'from', SyntaxKind.from_keyword ],
+  [ 'full', SyntaxKind.full_keyword ],
+  [ 'function', SyntaxKind.function_keyword ],
+  [ 'goto', SyntaxKind.goto_keyword ],
+  [ 'grant', SyntaxKind.grant_keyword ],
+  [ 'group', SyntaxKind.group_keyword ],
+  [ 'having', SyntaxKind.having_keyword ],
+  [ 'holdlock', SyntaxKind.holdlock_keyword ],
+  [ 'identity', SyntaxKind.identity_keyword ],
+  [ 'identity_insert', SyntaxKind.identity_insert_keyword ],
+  [ 'identitycol', SyntaxKind.identitycol_keyword ],
+  [ 'if', SyntaxKind.if_keyword ],
+  [ 'in', SyntaxKind.in_keyword ],
+  [ 'index', SyntaxKind.index_keyword ],
+  [ 'inner', SyntaxKind.inner_keyword ],
+  [ 'insert', SyntaxKind.insert_keyword ],
+  [ 'intersect', SyntaxKind.intersect_keyword ],
+  [ 'into', SyntaxKind.into_keyword ],
+  [ 'is', SyntaxKind.is_keyword ],
+  [ 'join', SyntaxKind.join_keyword ],
+  [ 'key', SyntaxKind.key_keyword ],
+  [ 'kill', SyntaxKind.kill_keyword ],
+  [ 'left', SyntaxKind.left_keyword ],
+  [ 'like', SyntaxKind.like_keyword ],
+  [ 'lineno', SyntaxKind.lineno_keyword ],
+  [ 'load', SyntaxKind.load_keyword ],
+  [ 'merge', SyntaxKind.merge_keyword ],
+  [ 'national', SyntaxKind.national_keyword ],
+  [ 'nocheck', SyntaxKind.nocheck_keyword ],
+  [ 'nonclustered', SyntaxKind.nonclustered_keyword ],
+  [ 'not', SyntaxKind.not_keyword ],
+  [ 'null', SyntaxKind.null_keyword ],
+  [ 'nullif', SyntaxKind.nullif_keyword ],
+  [ 'of', SyntaxKind.of_keyword ],
+  [ 'off', SyntaxKind.off_keyword ],
+  [ 'offsets', SyntaxKind.offsets_keyword ],
+  [ 'on', SyntaxKind.on_keyword ],
+  [ 'open', SyntaxKind.open_keyword ],
+  [ 'opendatasource', SyntaxKind.opendatasource_keyword ],
+  [ 'openquery', SyntaxKind.openquery_keyword ],
+  [ 'openrowset', SyntaxKind.openrowset_keyword ],
+  [ 'openxml', SyntaxKind.openxml_keyword ],
+  [ 'option', SyntaxKind.option_keyword ],
+  [ 'or', SyntaxKind.or_keyword ],
+  [ 'order', SyntaxKind.order_keyword ],
+  [ 'outer', SyntaxKind.outer_keyword ],
+  [ 'over', SyntaxKind.over_keyword ],
+  [ 'percent', SyntaxKind.percent_keyword ],
+  [ 'pivot', SyntaxKind.pivot_keyword ],
+  [ 'plan', SyntaxKind.plan_keyword ],
+  [ 'precision', SyntaxKind.precision_keyword ],
+  [ 'primary', SyntaxKind.primary_keyword ],
+  [ 'print', SyntaxKind.print_keyword ],
+  [ 'proc', SyntaxKind.proc_keyword ],
+  [ 'procedure', SyntaxKind.procedure_keyword ],
+  [ 'public', SyntaxKind.public_keyword ],
+  [ 'raiserror', SyntaxKind.raiserror_keyword ],
+  [ 'read', SyntaxKind.read_keyword ],
+  [ 'readtext', SyntaxKind.readtext_keyword ],
+  [ 'reconfigure', SyntaxKind.reconfigure_keyword ],
+  [ 'references', SyntaxKind.references_keyword ],
+  [ 'replication', SyntaxKind.replication_keyword ],
+  [ 'restore', SyntaxKind.restore_keyword ],
+  [ 'restrict', SyntaxKind.restrict_keyword ],
+  [ 'return', SyntaxKind.return_keyword ],
+  [ 'revert', SyntaxKind.revert_keyword ],
+  [ 'revoke', SyntaxKind.revoke_keyword ],
+  [ 'right', SyntaxKind.right_keyword ],
+  [ 'rollback', SyntaxKind.rollback_keyword ],
+  [ 'rowcount', SyntaxKind.rowcount_keyword ],
+  [ 'rowguidcol', SyntaxKind.rowguidcol_keyword ],
+  [ 'rule', SyntaxKind.rule_keyword ],
+  [ 'save', SyntaxKind.save_keyword ],
+  [ 'schema', SyntaxKind.schema_keyword ],
+  [ 'securityaudit', SyntaxKind.securityaudit_keyword ],
+  [ 'select', SyntaxKind.select_keyword ],
+  [ 'semantickeyphrasetable', SyntaxKind.semantickeyphrasetable_keyword ],
+  [ 'semanticsimilaritydetailstable', SyntaxKind.semanticsimilaritydetailstable_keyword ],
+  [ 'semanticsimilaritytable', SyntaxKind.semanticsimilaritytable_keyword ],
+  [ 'session_user', SyntaxKind.session_user_keyword ],
+  [ 'set', SyntaxKind.set_keyword ],
+  [ 'setuser', SyntaxKind.setuser_keyword ],
+  [ 'shutdown', SyntaxKind.shutdown_keyword ],
+  [ 'some', SyntaxKind.some_keyword ],
+  [ 'statistics', SyntaxKind.statistics_keyword ],
+  [ 'system_user', SyntaxKind.system_user_keyword ],
+  [ 'table', SyntaxKind.table_keyword ],
+  [ 'tablesample', SyntaxKind.tablesample_keyword ],
+  [ 'textsize', SyntaxKind.textsize_keyword ],
+  [ 'then', SyntaxKind.then_keyword ],
+  [ 'to', SyntaxKind.to_keyword ],
+  [ 'top', SyntaxKind.top_keyword ],
+  [ 'tran', SyntaxKind.tran_keyword ],
+  [ 'transaction', SyntaxKind.transaction_keyword ],
+  [ 'trigger', SyntaxKind.trigger_keyword ],
+  [ 'truncate', SyntaxKind.truncate_keyword ],
+  [ 'try_convert', SyntaxKind.try_convert_keyword ],
+  [ 'tsequal', SyntaxKind.tsequal_keyword ],
+  [ 'union', SyntaxKind.union_keyword ],
+  [ 'unique', SyntaxKind.unique_keyword ],
+  [ 'unpivot', SyntaxKind.unpivot_keyword ],
+  [ 'update', SyntaxKind.update_keyword ],
+  [ 'updatetext', SyntaxKind.updatetext_keyword ],
+  [ 'use', SyntaxKind.use_keyword ],
+  [ 'user', SyntaxKind.user_keyword ],
+  [ 'values', SyntaxKind.values_keyword ],
+  [ 'varying', SyntaxKind.varying_keyword ],
+  [ 'view', SyntaxKind.view_keyword ],
+  [ 'waitfor', SyntaxKind.waitfor_keyword ],
+  [ 'when', SyntaxKind.when_keyword ],
+  [ 'where', SyntaxKind.where_keyword ],
+  [ 'while', SyntaxKind.while_keyword ],
+  [ 'with', SyntaxKind.with_keyword ],
+  [ 'within group', SyntaxKind.within_keyword ],
+  [ 'writetext', SyntaxKind.writetext_keyword ],
 ])
 
 // todo: more options.
@@ -192,8 +221,30 @@ export interface ScannerOptions {
   skipTrivia?: boolean
 }
 
+function binarySearch(array: Array<Number>, key: Number) {
+  let low = 0;
+  let high = array.length - 1;
+  while (low <= high) {
+    const mid = low + (high - low / 2);
+    const val = array[mid];
+
+    if (val == key) {
+      return mid;
+    }
+
+    if (val < key) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  // do the 2s compliment trick
+  return ~low;
+}
+
 export class Scanner {
-  private line: number
+
   // token start position
   private start: number
   private pos: number
@@ -207,13 +258,34 @@ export class Scanner {
     this.text = text
     this.pos = 0
     this.len = text.length
-    this.lines  [];
+    this.lines = [];
   }
 
+  // only compute it when we need it.
+  lazyComputeLineNumbers() {
+    if (!this.lines) {
+      let pos = 0;
+      let ch = NaN;
+      this.lines.push(0);
+
+      while (ch = this.text.charCodeAt(pos++)) {
+        if (ch === Chars.newline) {
+          this.lines.push(pos);
+        }
+      }
+    }
+  }
+
+  // current char position as well?
   getCurrentLine(): number {
-    // hehe, there isn't a binary search. 4head.
-    // this will sorta have to be the line map bit.
-    return -1
+    this.lazyComputeLineNumbers();
+    const line = binarySearch(this.lines, this.pos);
+
+    if (line >= 0) {
+      return line;
+    }
+
+    return ~line - 1;
   }
 
   getTokenStart() {
@@ -228,23 +300,47 @@ export class Scanner {
   }
 
   // advance until we find the first unescaped single quote.
-  // edge case empty string.
+  // edge case: empty string
   scanString(): string {
     const start = this.pos
     let ch = this.text.charCodeAt(this.pos)
+    // todo: if we hit a newline preceded by a \
+    // then set a flag
     while (true) {
-
       if (ch === Chars.singleQuote) {
-        if (this.peek() === Chars.singleQuote) {
-          // escaped: we're still in the string boys
-          this.pos++;
-        } else break;
+        if (this.peek() !== Chars.singleQuote) {
+          break;
+        }
+
+        this.pos++;
       }
 
       ch = this.text.charCodeAt(++this.pos)
     }
-
+    // todo: above.
     return this.text.substr(start, this.pos - 1)
+  }
+
+  scanQuotedIdentifier() {
+    const start = this.pos;
+    let ch = this.text.charCodeAt(this.pos)
+    while (this.pos < this.len) {
+      const valid = isLetter(ch)
+        || isDigit(ch)
+        || ch === Chars.underscore
+        || ch === Chars.period
+        || ch === Chars.doubleQuote;
+
+    if (!valid) {
+      break;
+    }
+
+      this.pos++
+
+      ch = this.text.charCodeAt(this.pos)
+    }
+
+    return this.text.substr(start, this.pos - start)
   }
 
   // a.b.c.fk_fbab
@@ -252,10 +348,14 @@ export class Scanner {
     const start = this.pos;
     let ch = this.text.charCodeAt(this.pos)
     while (this.pos < this.len) {
-      if ((isLetter(ch)
+      const valid = isLetter(ch)
         || isDigit(ch)
         || ch === Chars.underscore
-        || ch === Chars.period)) break
+        || ch === Chars.period;
+
+      if (!valid) {
+        break;
+      }
 
       this.pos++
 
@@ -287,7 +387,8 @@ export class Scanner {
   }
 
   private scanInlineComment() {
-    const start = this.pos
+    // todo: do we ever plan to do anything with comments?
+    // const start = this.pos
     while (this.pos < this.len) {
       const ch = this.text.charCodeAt(this.pos)
 
@@ -300,7 +401,7 @@ export class Scanner {
   }
 
   private scanBlockComment() {
-    const start = this.pos
+    // const start = this.pos
     let ch = this.text.charCodeAt(this.pos)
 
     while (this.pos < this.len) {
@@ -326,6 +427,15 @@ export class Scanner {
     return parseFloat(this.text.substr(start, this.pos - start))
   }
 
+  isSpace() {
+    const next = this.text.charCodeAt(this.pos);
+
+    return (next === Chars.tab
+      || next === Chars.space
+      || next === Chars.newline
+      || next === Chars.carriageReturn)
+  }
+
   scan(): Token {
     const start = this.start = this.pos
 
@@ -334,30 +444,61 @@ export class Scanner {
       let val = undefined;
 
       switch (ch) {
+        // consume all whitespace
+        case Chars.carriageReturn:
+        case Chars.newline:
         case Chars.tab:
         case Chars.space:
           this.pos++
-          while (true) {
-            const next = this.text.charCodeAt(this.pos);
-            if (next !== Chars.tab || next !== Chars.space) 
-              break;
-            
-            this.pos++;
+          while (this.isSpace()) {
+            this.pos++
           }
           break;
 
-        case Chars.newline: this.pos++; break;
+        case Chars.plus:
+          return new Token(SyntaxKind.plusToken, start, this.pos)
 
-        // we'll just eat trivia for now. There's no good reason to have it just yet.
-        // maybe someday if we care about indent rules or someshit.
-
+        // a hyphen can't really START a statement or expression
+        // so I'm not sure why this is here. Oh well.
         case Chars.hyphen:
           if (this.peek() === Chars.hyphen) {
+            // todo: use comments as inline overrides?
             this.scanInlineComment()
           } else {
-            // subtraction binary expression?
-            // negative number... speculative parse, go.
+            // regular old minus, let the parser figure out
+            // what to do with it.
+            // we COULD eagerly go looking for a number or something, but it could be lots of things.
+            return new Token(SyntaxKind.minusToken, start, this.pos)
           }
+          break;
+        case Chars.ampersand:
+          break;
+
+        case Chars.lessThan: {
+          const next = this.peek();
+
+          switch (next) {
+            case Chars.greaterThan: return new Token(SyntaxKind.ltGt, start, this.pos)
+            case Chars.equal: return new Token(SyntaxKind.lessThanEqual, start, this.pos)
+            default: return new Token(SyntaxKind.lessThan, start, this.pos)
+          }
+        }
+
+        case Chars.greaterThan: {
+          const next = this.peek();
+
+          switch (next) {
+            case Chars.equal: return new Token(SyntaxKind.lessThanEqual, start, this.pos)
+            default: return new Token(SyntaxKind.lessThan, start, this.pos)
+          }
+        }
+
+        case Chars.bang: { }
+        // !=, !<, !>
+
+        case Chars.percent: { }
+        // %, %=
+
         case Chars.num_0:
         case Chars.num_1:
         case Chars.num_2:
@@ -381,17 +522,18 @@ export class Scanner {
           val = this.scanString()
 
           return new Token(SyntaxKind.string_literal, start, this.pos)
-        case Chars.doubleQuote:
-          // todo: quoted identifiers are funky.
+
+        case Chars.doubleQuote: {
+          this.scanQuotedIdentifier();
           return new Token(SyntaxKind.quoted_identifier, start, this.pos)
-        case Chars.at:
+        }
+
+        case Chars.at: {
           if (this.peek() === Chars.at) {
             // parse config function
             // ex: @@foo
             this.pos++;
             this.scanIdentifier()
-
-            // asdfasdfasdf
           } else {
             val = this.scanIdentifier()
 
@@ -402,22 +544,37 @@ export class Scanner {
               value: val
             }
           }
-          // or a local?
+        }
 
-        case Chars.hash:
+        case Chars.hash: {
+          let kind = SyntaxKind.temp_table;
+
+          // && isMssql
           if (this.peek() === Chars.hash) {
-            // mssql persistent temp tables.
+            this.pos++;
+            kind = SyntaxKind.shared_temp_table;
           }
 
+          const name = this.scanIdentifier();
+
+          return {
+            kind: kind,
+            start: start,
+            end: this.pos,
+            value: name
+          }
+        }
+        // fallthrough?
         // case Chars.x:
         // case Chars.X:
         //   // todo: mysql hex literal X'
 
-        // case Chars.N // begin nvarchar literal.
+        case Chars.n:
+        case Chars.N: // begin nvarchar literal.
 
         default: {
-          const identifier = this.scanIdentifier()
-          const keyword = keywordMap.get(identifier)
+          const identifier = this.scanDottedIdentifier()
+          const keyword = keywordMap.get(identifier.toLowerCase())
 
           if (keyword) {
             return {
@@ -428,7 +585,7 @@ export class Scanner {
             }
           }
 
-          // else it's just an identifier.
+          return new Token(SyntaxKind.name, start, this.pos);
         }
       }
 

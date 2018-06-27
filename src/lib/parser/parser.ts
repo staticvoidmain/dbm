@@ -7,11 +7,25 @@ import { SyntaxKind } from './syntax';
 
 import {
   SyntaxNode,
-  SelectNode,
+  SelectStatement,
   IntoClause,
   FromClause,
   WhereClause,
-  CaseExpression
+  CaseExpression,
+  VariableDeclarationStatement,
+  VariableDeclaration,
+  GoStatement,
+  SetStatement,
+  AssignmentOperator,
+  PlusEqualsOperator,
+  MinusEqualsOperator,
+  DivEqualsOperator,
+  MultiplyEqualsOperator,
+  AndEqualsOperator,
+  OrEqualsOperator,
+  XorEqualsOperator,
+  EqualsOperator,
+  ValueExpression
 } from './ast'
 
 export interface ParseTree {
@@ -23,39 +37,43 @@ export interface ParserError {
   line: number
 }
 
+// todo: speculative lookahead stuff...
 export class Parser {
   private errors: Array<ParserError>
   private scanner: Scanner
+  private token: Token
+  private settings: any;
 
+  // parse the next statement in the list.
   private next(): SyntaxNode {
+    this.token = this.scanner.scan()
 
-    const statements = []
+    switch (this.token.kind) {
 
-    while (true) {
-      const token = this.scanner.scan()
+      case SyntaxKind.go_keyword:
+        return this.parseGo();
 
-      switch (token.kind) {
-        case SyntaxKind.useKeyword:
-        // todo: parse the database if this is mssql.
-        case SyntaxKind.declareKeyword:
-          this.parseVariableDeclarationList()
+      case SyntaxKind.declare_keyword:
+        return this.parseVariableDeclarationList()
 
-        case SyntaxKind.selectKeyword:
-          this.parseSelect()
-        case SyntaxKind.insertKeyword:
-          // mssql supports these two styles of insert (and probably more)
-          // todo: insert into X values (xyz)
-          // todo: insert X select Y from Z
+      case SyntaxKind.set_keyword:
+        return this.parseSetStatement()
 
-        case SyntaxKind.updateKeyword:
-        case SyntaxKind.createKeyword:
-        case SyntaxKind.dropKeyword:
+      case SyntaxKind.use_keyword:
+        return this.parseUseDatabase();
 
-        default:
-          break
-      }
+      case SyntaxKind.select_keyword:
+        return this.parseSelect()
 
+      case SyntaxKind.insert_keyword:
+      case SyntaxKind.update_keyword:
+      case SyntaxKind.create_keyword:
+      case SyntaxKind.drop_keyword:
+
+      default:
+        return undefined;
     }
+
   }
 
   private error(err: string) {
@@ -68,12 +86,50 @@ export class Parser {
     })
   }
 
+  private moveNext(): Token {
+    return this.token = this.scanner.scan();
+  }
+
+  // parseX functions
   private parseColumnList() {
     return undefined
   }
 
   private parseVariableDeclarationList() {
-    // todo: expect @s and all that shiz
+
+    const statement = <VariableDeclarationStatement> this.createNode(this.token);
+
+    this.expect(SyntaxKind.declare_keyword);
+    statement.keyword = this.token;
+    statement.declarations = [];
+
+    this.moveNext();
+
+    this.expect(SyntaxKind.local_variable_reference);
+
+    const decl = <VariableDeclaration>{
+      name: this.token.value
+    };
+
+    this.moveNext();
+
+    if (this.token.kind === SyntaxKind.as_keyword) {
+      decl.as = this.token.value
+      this.moveNext();
+    }
+
+    if (this.token.kind === SyntaxKind.table_keyword) {
+
+      decl.type = 'table'
+      // todo:
+      // decl.expression = this.parseTableVariableDecl();
+      return statement;
+    }
+
+
+    // todo: parseType()
+    // todo: parseEqualsExpression
+    // todo: , and loop back around.
   }
 
   private createNode(token: Token): SyntaxNode {
@@ -84,26 +140,96 @@ export class Parser {
     }
   }
 
-  private parseExpected(kind: SyntaxKind, cb): SyntaxNode {
-    const next = this.scanner.scan();
-    if (next.kind === kind) {
-      return cb(this.createNode(next));
-    }
-    this.error('Expected ' + kind + ' but found ' + next.kind);
-  }
-  
-  private parseOptional(kind: SyntaxKind, cb): SyntaxNode {
-    const next = this.scanner.scan();
-    if (next.kind === kind) {
-       return cb(this.createNode(next));
+  private expect(kind: SyntaxKind) {
+    if (this.token.kind !== kind) {
+      this.error('Expected ' + kind + ' but found ' + this.token.kind);
     }
   }
 
-  private parseSelect() {
-    const node = <SelectNode>{
-      start: this.scanner.getTokenStart(),
-      kind: SyntaxKind.select_expession
+  private parseExpected(kind: SyntaxKind, cb): SyntaxNode {
+    if (this.token.kind === kind) {
+      return cb(this.createNode(this.token));
     }
+    this.error('Expected ' + kind + ' but found ' + this.token.kind);
+  }
+
+  private parseOptional(kind: SyntaxKind, cb): SyntaxNode {
+    if (this.token.kind === kind) {
+       return cb(this.createNode(this.token));
+    }
+  }
+
+  private parseGo(): SyntaxNode {
+    const statement = <GoStatement> this.createNode(this.token)
+
+    this.moveNext();
+    if (this.token.kind === SyntaxKind.numeric_literal) {
+      statement.count = this.token.value
+      this.moveNext()
+    }
+
+    return statement;
+  }
+
+  private parseSetStatement(): SyntaxNode {
+    const statement = <SetStatement> this.createNode(this.token)
+    statement.keyword = this.token;
+
+    this.moveNext()
+
+    this.expect(SyntaxKind.local_variable_reference);
+    statement.name = this.token.value;
+
+    statement.op = this.parseAssignmentOperation();
+    statement.expression = this.parseValueExpression()
+
+    return undefined;
+  }
+
+  private parseValueExpression(): ValueExpression {
+    return undefined;
+  }
+
+  private parseAssignmentOperation(): AssignmentOperator {
+    this.moveNext();
+
+    switch (this.token.kind) {
+      case SyntaxKind.equal:
+        return <EqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.plusEqualsAssignment:
+        return <PlusEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.minusEqualsAssignment:
+        return <MinusEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.divEqualsAssignment:
+        return <DivEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.mulEqualsAssignment:
+        return <MultiplyEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.bitwiseAndAssignment:
+        return <AndEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.bitwiseOrAssignment:
+        return <OrEqualsOperator> this.createNode(this.token)
+
+      case SyntaxKind.bitwiseXorAssignment:
+        return <XorEqualsOperator> this.createNode(this.token)
+
+      default:
+        this.error('Expected assignment operator (=, +=, -= etc...)')
+    }
+  }
+
+  private parseUseDatabase() {
+    return undefined;
+  }
+
+  private parseSelect() {
+    const node = <SelectStatement> this.createNode(this.token);
+
     // todo: perhaps this is too complex for the scanner... we don't have a terminal
     // to know when we're done scanning.
     node.columns = this.parseColumnList()
@@ -114,7 +240,6 @@ export class Parser {
     // node.order_by = this.parseOptional(SyntaxKind.order_by)
     // does having go with the group-by?
     // node.having = this.parseOptional(SyntaxKind.having_clause)
-    
     // todo: full-text index support.
     // node.contains freetext etc.
 
@@ -128,8 +253,8 @@ export class Parser {
   private parseFrom(): FromClause {
     return undefined
   }
-  
-  private parseWhere(): WhereClause {
+
+  private parseWhere(node): WhereClause {
     return undefined
   }
 
@@ -140,22 +265,18 @@ export class Parser {
    * @returns a list of statements within the script.
    */
   parse(script, info): ParseTree {
-    this.scanner = new Scanner(script, { skipTrivia: true });
+    this.settings = Object.assign({ skipTrivia: true }, info);
 
-    return undefined
+    this.scanner = new Scanner(script, this.settings);
+    const tree = {
+      nodes: []
+    };
 
-    /*
-    // this is sync CPU bound
-    this.scan(script)
-    while (true) {
-      const token = this.next()
-
-      // push things into the array of statements.
-      // todo: handle all the tokens.
+    let node = undefined;
+    while (node = this.next()) {
+      tree.nodes.push(node);
     }
 
-    // return statements
-
-    */
+    return tree;
   }
 };

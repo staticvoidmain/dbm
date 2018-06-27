@@ -3,8 +3,8 @@ import { EventEmitter } from 'events'
 import { create as factory, IManagedDatabase } from '../lib/database'
 import { existsSync, unlinkSync, appendFileSync } from 'fs'
 import { join } from 'path'
-import { Server } from "../lib/environment";
-import { IDatabaseSchema } from "../lib/vendors/common";
+import { Server } from '../lib/environment';
+import { IDatabaseSchema } from '../lib/vendors/common';
 
 export class IBackupOptions {
   backupName?: string
@@ -22,7 +22,7 @@ export class BackupRunner extends EventEmitter {
     super()
 
     this.sqlgen = sql.create(server.vendor, {})
-    
+
     this.db = factory(server);
   }
 
@@ -81,7 +81,7 @@ export class BackupRunner extends EventEmitter {
 
         appendFileSync(
           join(backupPath, backupName), text, 'utf8')
-        
+
         this.emit('log', 'table: ' + table.schema + '.' + table.name)
 
         // todo: script data?

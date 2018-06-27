@@ -11,7 +11,7 @@ function ms() {
 
 // philosophical: what can we possibly do inside a migration that can BREAK the consistency of our
 // database and cause mistakes.
-var steps = [
+let steps = [
   'ensure_procs_return_result',
   'ensure_role_can_execute_procs',
   'ensure_table_primary_keys',
@@ -26,7 +26,7 @@ function effectiveProcedurePermissions(role) {
   return `
   execute as user = '${role}'
 
-  select 
+  select
     name,
     can_execute = HAS_PERMS_BY_NAME(name, 'OBJECT', 'execute')
   from sys.procedures p
