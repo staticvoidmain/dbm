@@ -127,14 +127,14 @@ export type BinaryOperator =
   | LessThanEqualOperator
   | LikeOperator
 
-  export interface PlusEqualsOperator extends SyntaxNode { kind: SyntaxKind.plusEqualsAssignment }
-  export interface MinusEqualsOperator extends SyntaxNode { kind: SyntaxKind.minusEqualsAssignment }
-  export interface MultiplyEqualsOperator extends SyntaxNode { kind: SyntaxKind.mulEqualsAssignment }
-  export interface DivEqualsOperator extends SyntaxNode { kind: SyntaxKind.divEqualsAssignment }
-  export interface ModEqualsOperator extends SyntaxNode { kind: SyntaxKind.modEqualsAssignment }
-  export interface AndEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseAndAssignment }
-  export interface XorEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseXorAssignment }
-  export interface OrEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseOrAssignment }
+export interface PlusEqualsOperator extends SyntaxNode { kind: SyntaxKind.plusEqualsAssignment }
+export interface MinusEqualsOperator extends SyntaxNode { kind: SyntaxKind.minusEqualsAssignment }
+export interface MultiplyEqualsOperator extends SyntaxNode { kind: SyntaxKind.mulEqualsAssignment }
+export interface DivEqualsOperator extends SyntaxNode { kind: SyntaxKind.divEqualsAssignment }
+export interface ModEqualsOperator extends SyntaxNode { kind: SyntaxKind.modEqualsAssignment }
+export interface AndEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseAndAssignment }
+export interface XorEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseXorAssignment }
+export interface OrEqualsOperator extends SyntaxNode { kind: SyntaxKind.bitwiseOrAssignment }
 
 export type AssignmentOperator =
   | EqualsOperator
@@ -148,40 +148,50 @@ export type AssignmentOperator =
   | OrEqualsOperator
 
 export type ValueExpression =
-  | FunctionExpression
+  | FunctionCallExpression
   | ConstantExpression
   | CaseExpression
   | BinaryExpression
 // todo: table expression with select-top 1 some_col
 // or just select 1
 
+export enum ExprKind {
+  Boolean,
+  Value
+}
+
+export interface Expr extends SyntaxNode {
+  type: ExprKind
+}
+
 // todo: make this a type to account for nulls and defaults and all that
 // good stuff...
-export interface ConstantExpression extends SyntaxNode {
+export interface ConstantExpression extends Expr {
   // hack:
   value: any
 }
 
-export interface CaseExpression extends SyntaxNode {
+export interface CaseExpression extends Expr {
   keyword: Token
   cases: Array<WhenExpression>
   else: ValueExpression
 }
 
-export interface WhenExpression extends SyntaxNode {
+export interface WhenExpression extends Expr {
   keyword: Token
-  when: BinaryExpression
+  when: Expr
   then: ValueExpression
 }
 
 // function CALL expression?
-export interface FunctionExpression {
+// it's unary, but it takes arguments...
+export interface FunctionCallExpression {
 
 }
 
 export interface WhereClause extends SyntaxNode {
   keyword: Token
-  predicate: BinaryExpression
+  predicate: Expr
 }
 
 export interface IntoClause extends SyntaxNode {
@@ -212,7 +222,7 @@ export interface DerivedTable extends SyntaxNode {
 
 export type DataSource =
   | NamedSource
-  | FunctionExpression
+  | FunctionCallExpression
   | DerivedTable
 
 export interface FromClause extends SyntaxNode {
@@ -220,15 +230,11 @@ export interface FromClause extends SyntaxNode {
   sources: DataSource[]
 }
 
-export interface WhereClause extends SyntaxNode {
-
-}
-
-// --------------------
 // statements
-// --------------------
+// ----------
+// these represent the top-level declarations of a script
+// which are made up of all the other node types.
 
-// declare @foo varchar(255) = 'asdf';
 export interface VariableDeclarationStatement extends SyntaxNode {
   keyword: Token
   declarations: TableDeclaration | VariableDeclaration[]
@@ -239,7 +245,7 @@ export interface TableDeclaration extends SyntaxNode {}
 export interface VariableDeclaration extends SyntaxNode {
   name: string
   as: string
-  type: string // todo: type
+  type: string
   expression?: ValueExpression
 }
 

@@ -186,8 +186,68 @@ export class Parser {
     return undefined;
   }
 
+  // todo: distinguish from a where predicate?
   private parseValueExpression(): ValueExpression {
+    // todo: this is gonna get fairly complex.
+
     return undefined;
+  }
+  
+
+/*
+  1	~ (Bitwise NOT)
+  2	* (Multiplication), / (Division), % (Modulus)
+  3	+ (Positive), - (Negative), + (Addition), + (Concatenation), - (Subtraction), & (Bitwise AND), ^ (Bitwise Exclusive OR), | (Bitwise OR)
+  4	=, >, <, >=, <=, <>, !=, !>, !< (Comparison operators)
+  5	NOT
+  6	AND
+  7	ALL, ANY, BETWEEN, IN, LIKE, OR, SOME
+  8	= (Assignment)
+*/
+  // todo
+  private parseInExpression(left: Expr) {
+
+  }
+
+  private isOrPrecedence() {
+    // todo: more any,all,some,in
+    return this.token.kind === SyntaxKind.or_keyword
+      || this.token.kind === SyntaxKind.between_keyword
+      || this.token.kind === SyntaxKind.like_keyword;
+  }
+
+  // fallthrough precedence
+  private tryParseOrExpr() {
+    const expr = this.tryParseAndExpr();
+
+    while (this.isOrPrecedence()) {
+
+    }
+  }
+
+  private tryParseAndExpr(left: Expr) {
+
+  }
+
+  private tryParseNotExpr() {
+
+  }
+
+  private tryParseComparisonExpr() {
+
+  }
+
+  private tryParseMultiplicationExpr() {
+
+  }
+
+  private tryParseBitwiseNotExpr() {
+
+  }
+
+  private exprBase() {
+    // handle things like function calls
+    // paren-expressions
   }
 
   private parseAssignmentOperation(): AssignmentOperator {
