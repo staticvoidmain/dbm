@@ -1,15 +1,6 @@
-# just made this repo public, it's currently unfinished.
+# Totally unfinished, just a side project.
 
-# dbm
 
-Now anyone can be a DBA!
-
-Use tools to:
-* Analyze
-* Backup
-* Optimize
-* Review
-* Migrate
 
 
 # examples
@@ -38,6 +29,14 @@ npm install pg
 
 npm install sqlite3
 ```
+
+## The parser is not batteries included
+
+I didn't want to mess with subtrees for now, since it's eventually going to be
+an NPM module, I just don't want to pollute NPM with the module until it's in a
+usable state.
+
+mklink 
 
 # TypeScript
 
